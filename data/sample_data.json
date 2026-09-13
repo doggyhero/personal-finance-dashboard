@@ -1,0 +1,176 @@
+{
+  "meta": {
+    "version": 1,
+    "created": "2026-08-09",
+    "currency_note": "TWD 帳戶以新台幣記，USD 帳戶以美元記；換算總資產時用該筆快照當時的 usd_rate。",
+    "migrated_from": "Open Source Clean Dataset (精簡開源示範數據)",
+    "pending_note": "示範數據供 GitHub 開源展示與功能體驗使用。",
+    "known_gaps": [
+      "精簡示範架構：1台股券商、1美股券商、1台灣銀行(台/美)、1美國銀行",
+      "此數據集供公開展示、功能驗證與新用戶起手使用"
+    ]
+  },
+  "accounts_meta": [
+    {
+      "key": "玉山活存",
+      "currency": "TWD",
+      "category": "cash",
+      "deposit_type": "demand",
+      "institution": "玉山銀行"
+    },
+    {
+      "key": "玉山美金",
+      "currency": "USD",
+      "category": "cash",
+      "deposit_type": "demand",
+      "institution": "玉山銀行"
+    },
+    {
+      "key": "Chase Checking",
+      "currency": "USD",
+      "category": "cash",
+      "deposit_type": "demand",
+      "institution": "Chase Bank"
+    },
+    {
+      "key": "玉山證券",
+      "currency": "TWD",
+      "category": "tw_stock",
+      "institution": "玉山證券"
+    },
+    {
+      "key": "Firstrade",
+      "currency": "USD",
+      "category": "us_stock",
+      "institution": "Firstrade"
+    }
+  ],
+  "snapshots": [
+    {
+      "date": "2025-10-15",
+      "usd_rate": 31.8,
+      "accounts": {
+        "玉山活存": 350000,
+        "玉山美金": 12000,
+        "Chase Checking": 8000,
+        "玉山證券": 800000,
+        "Firstrade": 30000
+      },
+      "note": "2025 Q4 季末盤點"
+    },
+    {
+      "date": "2026-01-15",
+      "usd_rate": 32.1,
+      "accounts": {
+        "玉山活存": 420000,
+        "玉山美金": 15000,
+        "Chase Checking": 10000,
+        "玉山證券": 950000,
+        "Firstrade": 36000
+      },
+      "note": "2026 年初資產配置"
+    },
+    {
+      "date": "2026-04-15",
+      "usd_rate": 32.35,
+      "accounts": {
+        "玉山活存": 500000,
+        "玉山美金": 18000,
+        "Chase Checking": 12000,
+        "玉山證券": 1100000,
+        "Firstrade": 42000
+      },
+      "note": "2026 Q2 定期定額投入"
+    },
+    {
+      "date": "2026-07-15",
+      "usd_rate": 32.5,
+      "accounts": {
+        "玉山活存": 600000,
+        "玉山美金": 20000,
+        "Chase Checking": 15000,
+        "玉山證券": 1250000,
+        "Firstrade": 50000
+      },
+      "note": "2026 Q3 年中資產總結"
+    }
+  ],
+  "tw_stocks": [
+    {
+      "ticker": "2330",
+      "name": "台積電",
+      "shares": 1000,
+      "price": 950,
+      "cost_total": 800000,
+      "market_value": 950000,
+      "unrealized_pl": 150000,
+      "roi": 0.1875,
+      "broker": "玉山證券",
+      "note": "核心權值股，定期定額存股",
+      "avg_cost": 800
+    },
+    {
+      "ticker": "0050",
+      "name": "元大台灣50",
+      "shares": 2000,
+      "price": 170,
+      "cost_total": 300000,
+      "market_value": 340000,
+      "unrealized_pl": 40000,
+      "roi": 0.1333,
+      "broker": "玉山證券",
+      "note": "大盤指數 ETF",
+      "avg_cost": 150
+    }
+  ],
+  "us_stocks": [
+    {
+      "ticker": "VOO",
+      "name": "Vanguard S&P 500 ETF",
+      "shares": 50,
+      "price": 510,
+      "cost_total": 22500,
+      "market_value": 25500,
+      "broker": "Firstrade",
+      "situs": "US",
+      "note": "標普500指數 ETF"
+    },
+    {
+      "ticker": "QQQ",
+      "name": "Invesco QQQ Trust",
+      "shares": 30,
+      "price": 480,
+      "cost_total": 12000,
+      "market_value": 14400,
+      "broker": "Firstrade",
+      "situs": "US",
+      "note": "納斯達克100科技成長"
+    },
+    {
+      "ticker": "NVDA",
+      "name": "NVIDIA Corporation",
+      "shares": 80,
+      "price": 125,
+      "cost_total": 8000,
+      "market_value": 10000,
+      "broker": "Firstrade",
+      "situs": "US",
+      "note": "AI 半導體龍頭"
+    }
+  ],
+  "insurance": [],
+  "decision_framework": {
+    "monthly_burn_rate_twd": 60000,
+    "emergency_reserve_months": 12,
+    "max_drawdown_tolerance_pct": 25,
+    "target_equity_weight_pct": 50,
+    "us_estate_tax_threshold_usd": 60000
+  },
+  "log": [
+    {
+      "date": "2026-07-15",
+      "note": "精簡範本初始化完成：包含 1 台股券商、1 美股券商、1 台灣銀行 (台/美)、1 美國銀行"
+    }
+  ],
+  "watch_notes": {}
+}

@@ -1,0 +1,3309 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>個人資產與財務決策系統 | Personal Finance OS</title>
+  
+  <!-- Environment Config (Optional .env / env.js) -->
+  <!-- Environment Config (Optional config/env.js or env.js) -->
+  <script src="config/env.js"></script>
+  <script src="env.js"></script>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b'
+            },
+            dark: {
+              950: '#070a11',
+              900: '#0b0f19',
+              850: '#0f172a',
+              800: '#111827',
+              750: '#162032',
+              700: '#1f2937',
+              600: '#374151'
+            }
+          },
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Noto Sans TC"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', '"SF Mono"', 'Consolas', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Marked.js Markdown Renderer -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body { background-color: #070a11; color: #f3f4f6; overflow-x: hidden; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #070a11; }
+    ::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4a5568; }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    .card-panel { background-color: #111827; border: 1px solid #1f2937; border-radius: 0.75rem; }
+    .table-input {
+      background-color: #1f2937;
+      border: 1px solid #374151;
+      color: #ffffff;
+      transition: all 0.15s ease;
+    }
+    .table-input:focus {
+      background-color: #0b0f19;
+      border-color: #10b981;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+    }
+    .tab-active { background-color: #10b981 !important; color: #ffffff !important; font-weight: 600; }
+    .active-snap-row { background-color: rgba(16, 185, 129, 0.14) !important; border-left: 4px solid #10b981 !important; }
+    .toast-animate { animation: fadeInOut 3.2s ease-in-out forwards; }
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translateY(12px); }
+      10% { opacity: 1; transform: translateY(0); }
+      85% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-8px); }
+    }
+    /* AI Markdown Rich Typography */
+    .ai-markdown h1, .ai-markdown h2, .ai-markdown h3, .ai-markdown h4 { color: #f8fafc; font-weight: 700; margin-top: 1rem; margin-bottom: 0.5rem; }
+    .ai-markdown h2 { font-size: 1.05rem; border-bottom: 1px solid #374151; padding-bottom: 0.35rem; color: #c084fc; }
+    .ai-markdown h3 { font-size: 0.95rem; color: #34d399; }
+    .ai-markdown h4 { font-size: 0.85rem; color: #38bdf8; }
+    .ai-markdown p { margin-bottom: 0.75rem; line-height: 1.65; color: #e2e8f0; }
+    .ai-markdown ul { list-style-type: disc; margin-left: 1.25rem; margin-bottom: 0.75rem; }
+    .ai-markdown ol { list-style-type: decimal; margin-left: 1.25rem; margin-bottom: 0.75rem; }
+    .ai-markdown li { margin-bottom: 0.35rem; color: #cbd5e1; }
+    .ai-markdown strong { color: #ffffff; font-weight: 600; }
+    .ai-markdown blockquote { border-left: 4px solid #a855f7; padding: 0.35rem 0.75rem; color: #cbd5e1; margin-bottom: 0.75rem; background: rgba(168, 85, 247, 0.08); border-radius: 0 0.375rem 0.375rem 0; }
+    .ai-markdown hr { border-color: #374151; margin: 1rem 0; }
+    .ai-markdown code { background: #1e293b; color: #38bdf8; padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.85em; }
+    .ai-markdown pre { background: #0f172a; padding: 0.75rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 0.75rem; border: 1px solid #334155; }
+    .ai-markdown table { width: 100%; border-collapse: collapse; margin-bottom: 0.75rem; }
+    .ai-markdown th, .ai-markdown td { border: 1px solid #374151; padding: 0.4rem 0.6rem; text-align: left; }
+    .ai-markdown th { background: #1f2937; color: #f8fafc; font-weight: 600; }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
+
+  <!-- TOP APP HEADER -->
+  <header class="bg-dark-800 border-b border-dark-700 sticky top-0 z-40 px-4 lg:px-6 py-2.5 shadow-md">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-black text-lg">
+          $
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-base font-bold text-white tracking-tight">個人資產與財務決策看板</h1>
+            <span class="text-[11px] bg-emerald-500/20 text-emerald-300 font-mono px-2 py-0.5 rounded-full border border-emerald-500/30 font-semibold">Mode S/W/Q</span>
+          </div>
+          <p class="text-xs text-slate-400">Personal Finance OS • 台幣/美金/投資三線分類 • 資金活化戰情指南</p>
+        </div>
+      </div>
+
+      <!-- Quick Snapshot Selector & Actions -->
+      <div class="flex items-center flex-wrap gap-2 text-xs">
+        
+        <!-- Snapshot Selector -->
+        <div class="flex items-center bg-dark-750 border border-dark-700 rounded-lg px-2.5 py-1 space-x-2">
+          <span class="text-slate-400 font-medium whitespace-nowrap">📅 檢視快照：</span>
+          <select id="global-snapshot-select" class="bg-dark-800 text-emerald-300 font-mono font-semibold text-xs border border-dark-600 rounded px-2 py-0.5 focus:outline-none focus:border-emerald-500 cursor-pointer">
+            <!-- Populated dynamically -->
+          </select>
+          <button id="btn-goto-latest-snap" class="hidden text-[11px] bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-2 py-0.5 rounded transition">回到最新</button>
+        </div>
+
+        <!-- AI Advisor Trigger Button -->
+        <button onclick="window.openAIModal()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold px-3 py-1.5 rounded-lg flex items-center space-x-1.5 shadow transition cursor-pointer">
+          <span>🤖</span> <span>AI 財務總結與策略</span>
+        </button>
+
+        <!-- Dynamic Account Manager Trigger Button -->
+        <button id="btn-header-acc-manager" onclick="window.openAccountManagerModal()" class="bg-dark-750 hover:bg-dark-700 text-cyan-300 border border-cyan-500/40 px-2.5 py-1.5 rounded-lg flex items-center space-x-1.5 shadow transition cursor-pointer" title="新增或刪除銀行與券商帳戶">
+          <span>🏦</span> <span>帳戶管理</span>
+        </button>
+
+        <!-- Random Scenario Dice Trigger Button -->
+        <button id="btn-header-randomize" onclick="window.randomizeDemoState()" class="bg-dark-750 hover:bg-dark-700 text-amber-300 border border-amber-500/40 px-2.5 py-1.5 rounded-lg flex items-center space-x-1.5 shadow transition cursor-pointer" title="隨機骰出示範資產情境與數據">
+          <span>🎲</span> <span>隨機情境</span>
+        </button>
+
+        <!-- FX Rate & Auto-Save Badge -->
+        <div class="flex items-center space-x-2">
+          <div class="bg-dark-750 border border-dark-700 px-2.5 py-1 rounded-lg text-slate-300 font-mono">
+            USD/TWD: <span class="text-emerald-400 font-bold" id="badge-usd-rate">--</span>
+          </div>
+          
+          <div class="bg-dark-750 border border-dark-700 px-2.5 py-1 rounded-lg text-slate-300 flex items-center space-x-1.5" title="資料變動皆自動即時儲存於瀏覽器 LocalStorage">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-slate-300 font-medium">已自動秒存</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </header>
+
+  <!-- NAVIGATION TABS -->
+  <nav class="bg-dark-800/90 border-b border-dark-700 px-4 lg:px-6">
+    <div class="max-w-7xl mx-auto flex overflow-x-auto space-x-1 py-1.5 scrollbar-none">
+      <button class="nav-tab px-3.5 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-dark-700 transition tab-active flex items-center space-x-1.5" data-tab="overview">
+        <span>📊</span> <span>資產總覽 (台幣/美金/投資)</span>
+      </button>
+      <button class="nav-tab px-3.5 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-dark-700 transition flex items-center space-x-1.5" data-tab="snapshots">
+        <span>📝</span> <span>快照管理與輸入 (依銀行)</span>
+      </button>
+      <button class="nav-tab px-3.5 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-dark-700 transition flex items-center space-x-1.5" data-tab="stocks">
+        <span>📈</span> <span>台美股持股管理</span>
+      </button>
+      <button class="nav-tab px-3.5 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-dark-700 transition flex items-center space-x-1.5" data-tab="insurance">
+        <span>🛡️</span> <span>保險與儲蓄險</span>
+      </button>
+      <button class="nav-tab px-3.5 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-dark-700 transition flex items-center space-x-1.5" data-tab="decision">
+        <span>⚖️</span> <span>投資決策與約束指南</span>
+      </button>
+      <button class="nav-tab px-3.5 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-dark-700 transition flex items-center space-x-1.5" data-tab="data">
+        <span>💾</span> <span>資料匯出與備份</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MAIN VIEW CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 space-y-6">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: OVERVIEW (資產總覽: 台幣/美金/投資/保險) -->
+    <!-- ========================================== -->
+    <div id="view-overview" class="tab-view space-y-6">
+      
+      <!-- Historical View Alert Banner -->
+      <div id="historical-view-banner" class="hidden bg-amber-500/15 border border-amber-500/30 rounded-xl p-3 flex items-center justify-between text-xs text-amber-200">
+        <div class="flex items-center space-x-2">
+          <span class="text-base">⚠️</span>
+          <span>您目前正在檢視歷史快照：<strong id="banner-snap-date" class="font-mono text-amber-100">--</strong>。總覽所有指標與圓餅圖已切換至該期數據。</span>
+        </div>
+        <button onclick="window.selectSnapshot(window.state.snapshots.length - 1)" class="bg-amber-600 hover:bg-amber-500 text-white px-2.5 py-1 rounded text-xs font-medium transition">返回最新快照</button>
+      </div>
+
+      <!-- Top KPI Metric Cards (4 Major Columns) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <!-- Total Net Worth Card -->
+        <div class="card-panel p-4 space-y-2 relative overflow-hidden">
+          <div class="flex items-center justify-between text-xs text-slate-400 font-medium">
+            <span>總淨值 (Net Worth)</span>
+            <span class="text-[11px] font-mono bg-dark-700 text-slate-300 px-1.5 py-0.5 rounded" id="kpi-snap-date-label">最新</span>
+          </div>
+          <div class="text-2xl font-extrabold text-white tracking-tight font-mono" id="kpi-net-worth-twd">NT$ --</div>
+          <div class="flex items-center justify-between text-xs pt-1 border-t border-dark-700/60">
+            <span class="text-slate-400 font-mono" id="kpi-net-worth-usd">$ -- USD</span>
+            <span id="kpi-growth-badge" class="font-mono text-[11px] font-semibold px-2 py-0.5 rounded">--</span>
+          </div>
+        </div>
+
+        <!-- Deployable Cash Card -->
+        <div class="card-panel p-4 space-y-2">
+          <div class="flex items-center justify-between text-xs text-slate-400 font-medium">
+            <span>可靈活調度閒置資金</span>
+            <span class="text-[11px] text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">已扣24M生活金</span>
+          </div>
+          <div class="text-2xl font-extrabold text-cyan-400 tracking-tight font-mono" id="kpi-deployable-cash">NT$ --</div>
+          <div class="text-[11px] text-slate-400 pt-1 border-t border-dark-700/60 space-y-0.5">
+            <div class="flex items-center justify-between font-mono">
+              <span class="text-emerald-400 font-semibold" id="kpi-liquid-demand">🟢 純活存 NT$ --</span>
+              <span class="text-slate-300 font-medium" id="kpi-liquid-time">🔒 定存 NT$ --</span>
+            </div>
+            <div class="text-[10px] text-slate-500 flex items-center justify-between pt-0.5">
+              <span>總現金: <span class="font-mono text-slate-300" id="kpi-total-cash">--</span></span>
+              <span>緊急金 NT$2.4M</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Risk Budget Card (25% Drawdown) -->
+        <div class="card-panel p-4 space-y-2">
+          <div class="flex items-center justify-between text-xs text-slate-400 font-medium">
+            <span>25% 回撤風險預算</span>
+            <span class="text-[11px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">上限 50% 股權</span>
+          </div>
+          <div class="text-2xl font-extrabold text-emerald-400 tracking-tight font-mono" id="kpi-risk-capacity">NT$ --</div>
+          <div class="text-xs text-slate-400 flex items-center justify-between pt-1 border-t border-dark-700/60">
+            <span>現有股票: <span class="font-mono text-slate-200" id="kpi-current-equity">--</span></span>
+            <span class="text-emerald-400 font-mono font-semibold" id="kpi-equity-headroom">+NT$ -- 可投</span>
+          </div>
+        </div>
+
+        <!-- US Estate Tax Threshold -->
+        <div class="card-panel p-4 space-y-2">
+          <div class="flex items-center justify-between text-xs text-slate-400 font-medium">
+            <span>美國遺產稅曝險</span>
+            <span class="text-[11px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">NRA 免稅額 $60k</span>
+          </div>
+          <div class="text-2xl font-extrabold text-amber-400 tracking-tight font-mono" id="kpi-estate-tax-excess">$ --</div>
+          <div class="text-xs text-slate-400 flex items-center justify-between pt-1 border-t border-dark-700/60">
+            <span>美股資產: <span class="font-mono text-slate-200" id="kpi-us-situs-total">--</span></span>
+            <span class="text-rose-400 font-mono text-[11px]">未避險部分</span>
+          </div>
+        </div>
+
+      </div>
+
+
+      <!-- PERIOD DELTA COMPARISON PANEL (跨期差異比對分析) -->
+      <div class="card-panel p-4 space-y-3 bg-gradient-to-r from-dark-850 via-dark-800 to-dark-850 border-dark-600">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-dark-700 pb-2.5">
+          <div class="flex items-center space-x-2">
+            <span class="text-base">🔍</span>
+            <h2 class="text-sm font-bold text-white">跨期變動明細對照 (與上一期比較)</h2>
+            <span class="text-[11px] text-slate-400 font-mono" id="delta-compare-label">--</span>
+          </div>
+          <button onclick="window.openAIModal()" class="text-xs text-purple-300 hover:text-purple-200 bg-purple-900/40 border border-purple-700/50 px-2.5 py-1 rounded flex items-center space-x-1 transition cursor-pointer">
+            <span>🤖</span> <span>點此生成 AI 深入解讀</span>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono" id="delta-summary-grid">
+          <!-- Dynamically populated delta metric cards -->
+        </div>
+
+        <div class="text-xs text-slate-300 space-y-1 pt-1" id="delta-accounts-highlights">
+          <!-- Dynamically populated account change items -->
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Net Worth Trend Line Chart (2 Cols) -->
+        <div class="card-panel p-4 space-y-3 lg:col-span-2">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-bold text-slate-200 flex items-center space-x-2">
+              <span>📈</span> <span>資產淨值歷史成長走勢 (NTD)</span>
+            </h2>
+            <span class="text-xs text-slate-400 font-mono">全歷史快照</span>
+          </div>
+          <div class="h-64 relative">
+            <canvas id="chart-net-worth-history"></canvas>
+          </div>
+        </div>
+
+        <!-- Asset Allocation Doughnut Chart (1 Col) -->
+        <div class="card-panel p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-bold text-slate-200 flex items-center space-x-2">
+              <span>🍩</span> <span>資產功能類別分佈</span>
+            </h2>
+            <span class="text-xs font-mono text-emerald-400" id="chart-snap-label">--</span>
+          </div>
+          <div class="h-64 relative flex items-center justify-center">
+            <canvas id="chart-asset-allocation"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- FUNCTIONAL ASSET CATEGORIES MATRIX (台幣/美金/投資/保險 四大板塊) -->
+      <!-- ======================================================== -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-bold text-slate-200 flex items-center space-x-2">
+            <span>🏛️</span> <span>資產分佈總覽（依功能分類：🇹🇼台幣現金 / 🇺🇸美金存款 / 📈投資證券 / 🛡️美元儲蓄險）</span>
+          </h2>
+          <span class="text-xs text-slate-400">目前顯示期數：<span class="font-mono text-emerald-400 font-semibold" id="matrix-snap-date">--</span></span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="overview-functional-categories-grid">
+          <!-- Dynamically populated 4 functional category panels -->
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- TAB 2: SNAPSHOTS (快照管理與試算表填寫: 依銀行) -->
+    <!-- ========================================== -->
+    <div id="view-snapshots" class="tab-view space-y-6 hidden">
+      
+      <!-- Action & Filter Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-dark-800 p-3.5 rounded-xl border border-dark-700">
+        <div class="flex items-center space-x-3">
+          <button onclick="window.openAddSnapshotModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg flex items-center space-x-1.5 transition shadow-sm cursor-pointer">
+            <span>➕</span> <span>新增資產快照 (依銀行機構分類填寫)</span>
+          </button>
+          <button onclick="window.openEditSnapshotModal(window.activeSnapshotIndex)" class="bg-dark-700 hover:bg-dark-600 text-slate-200 text-xs font-semibold px-3.5 py-2 rounded-lg border border-dark-600 flex items-center space-x-1.5 transition cursor-pointer">
+            <span>✏️</span> <span>編輯目前選取快照</span>
+          </button>
+        </div>
+
+        <div class="text-xs text-slate-400">
+          共 <span class="font-mono font-bold text-white" id="snapshots-count-label">0</span> 筆歷史紀錄 • 點擊任意列可立即切換總覽檢視
+        </div>
+      </div>
+
+      <!-- Snapshot History Cards Table -->
+      <div class="card-panel overflow-hidden">
+        <div class="p-3.5 border-b border-dark-700 bg-dark-750 flex items-center justify-between">
+          <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider">歷史資產快照總覽表</h2>
+          <span class="text-xs text-slate-400">點擊「設為檢視」可將全站總覽切換至該期</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-dark-900 text-slate-400 font-mono border-b border-dark-700">
+              <tr>
+                <th class="py-3 px-4">狀態</th>
+                <th class="py-3 px-4">快照日期</th>
+                <th class="py-3 px-4 text-right">美元匯率</th>
+                <th class="py-3 px-4 text-right">台幣現金存款</th>
+                <th class="py-3 px-4 text-right">美金存款 (USD)</th>
+                <th class="py-3 px-4 text-right">美元儲蓄險 (USD)</th>
+                <th class="py-3 px-4 text-right">證券部位 (NTD等值)</th>
+                <th class="py-3 px-4 text-right font-bold text-slate-200">總資產 (NTD)</th>
+                <th class="py-3 px-4 text-right">期間成長</th>
+                <th class="py-3 px-4">備註</th>
+                <th class="py-3 px-4 text-center">操作</th>
+              </tr>
+            </thead>
+            <tbody id="snapshots-table-body" class="divide-y divide-dark-700/60 font-mono">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Full Comparison Matrix of All Accounts Across All Snapshots -->
+      <div class="card-panel overflow-hidden">
+        <div class="p-3.5 border-b border-dark-700 bg-dark-750 flex items-center justify-between">
+          <div>
+            <div class="flex items-center space-x-2">
+            <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider">跨期帳戶餘額對照矩陣 (依金融機構排序)</h2>
+            <button onclick="window.openAccountManagerModal()" class="text-[11px] bg-cyan-900/40 hover:bg-cyan-800 text-cyan-300 border border-cyan-700/50 px-2 py-0.5 rounded transition flex items-center space-x-1 cursor-pointer">
+              <span>🏦</span> <span>新增/管理帳戶</span>
+            </button>
+          </div>
+            <p class="text-[11px] text-slate-400">填寫輸入時依帳戶性質分組：台灣銀行 ➜ 美國銀行 ➜ 台股券商 ➜ 美股券商</p>
+          </div>
+          <button onclick="window.exportCSV('snapshots')" class="text-xs bg-dark-700 hover:bg-dark-600 text-slate-300 px-3 py-1.5 rounded border border-dark-600 flex items-center space-x-1 cursor-pointer">
+            <span>📥</span> <span>匯出此矩陣 CSV</span>
+          </button>
+        </div>
+        <div class="overflow-x-auto max-h-[550px]">
+          <table class="w-full text-left text-xs border-collapse" id="all-snapshots-matrix-table">
+            <!-- Dynamically populated full matrix table -->
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- TAB 3: STOCKS (台美股持股管理與動態維護) -->
+    <!-- ========================================== -->
+    <div id="view-stocks" class="tab-view space-y-6 hidden">
+      
+      <!-- Top Stocks KPI Summary & Sync Action -->
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div class="card-panel p-4 space-y-1">
+          <span class="text-xs text-slate-400 font-medium">台股總市值 (玉山證券)</span>
+          <div class="text-xl font-bold font-mono text-emerald-400" id="stocks-kpi-tw-total">NT$ --</div>
+          <div class="text-xs text-slate-400"><span id="tw-stocks-count-label">4</span> 檔個股 • 未實現: <span id="stocks-kpi-tw-pl" class="font-mono">--</span></div>
+        </div>
+        <div class="card-panel p-4 space-y-1">
+          <span class="text-xs text-slate-400 font-medium">美股總市值 (Firstrade+RH+WF)</span>
+          <div class="text-xl font-bold font-mono text-cyan-400" id="stocks-kpi-us-total">$ -- USD</div>
+          <div class="text-xs text-slate-400">約折合 <span id="stocks-kpi-us-twd" class="font-mono text-slate-200">--</span></div>
+        </div>
+        <div class="card-panel p-4 space-y-1">
+          <span class="text-xs text-slate-400 font-medium">全體股票權重佔總資產</span>
+          <div class="text-xl font-bold font-mono text-purple-400" id="stocks-kpi-equity-weight">-- %</div>
+          <div class="text-xs text-slate-400">風險上限: 50.0% (額度充裕)</div>
+        </div>
+        <div class="card-panel p-4 flex flex-col justify-center space-y-2 bg-emerald-950/20 border-emerald-500/30">
+          <span class="text-xs text-emerald-300 font-semibold">⚡ 持股連動快照同步</span>
+          <button onclick="window.syncStockValuationsToSnapshot()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center justify-center space-x-1.5 transition cursor-pointer shadow">
+            <span>🔄</span> <span>同步股票市值至快照</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Taiwan Stocks Table -->
+      <div class="card-panel overflow-hidden">
+        <div class="p-3.5 border-b border-dark-700 bg-dark-750 flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider">🇹🇼 台灣股票部位 (玉山證券)</h2>
+            <span class="text-[11px] text-slate-400">修改或新增後自動連動玉山證券帳戶餘額</span>
+          </div>
+          <button onclick="window.openStockModal('TW', 'add')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center space-x-1 cursor-pointer transition">
+            <span>➕</span> <span>新增台股標的</span>
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-dark-900 text-slate-400 font-mono border-b border-dark-700">
+              <tr>
+                <th class="py-2.5 px-4">代號</th>
+                <th class="py-2.5 px-4">名稱</th>
+                <th class="py-2.5 px-4 text-right">持有股數</th>
+                <th class="py-2.5 px-4 text-right">平均成本</th>
+                <th class="py-2.5 px-4 text-right">總投入成本</th>
+                <th class="py-2.5 px-4 text-right">目前市價</th>
+                <th class="py-2.5 px-4 text-right">目前市值</th>
+                <th class="py-2.5 px-4 text-right">未實現損益</th>
+                <th class="py-2.5 px-4 text-right">報酬率 (ROI)</th>
+                <th class="py-2.5 px-4 text-center">操作</th>
+              </tr>
+            </thead>
+            <tbody id="tw-stocks-table-body" class="divide-y divide-dark-700/60 font-mono">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- US Stocks Table -->
+      <div class="card-panel overflow-hidden">
+        <div class="p-3.5 border-b border-dark-700 bg-dark-750 flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider">🇺🇸 美國股票部位 (US Stock Holdings)</h2>
+            <span class="text-[11px] text-slate-400">新增或修改後自動重新統計各美股券商總值</span>
+          </div>
+          <button onclick="window.openStockModal('US', 'add')" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center space-x-1 cursor-pointer transition">
+            <span>➕</span> <span>新增美股標的</span>
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-dark-900 text-slate-400 font-mono border-b border-dark-700">
+              <tr>
+                <th class="py-2.5 px-4">券商帳戶</th>
+                <th class="py-2.5 px-4">標的代碼</th>
+                <th class="py-2.5 px-4 text-right">持有股數</th>
+                <th class="py-2.5 px-4 text-right">最新市價 ($)</th>
+                <th class="py-2.5 px-4 text-right font-bold text-slate-200">市值 ($ USD)</th>
+                <th class="py-2.5 px-4 text-right">折合台幣 (NTD)</th>
+                <th class="py-2.5 px-4">備註</th>
+                <th class="py-2.5 px-4 text-center">操作</th>
+              </tr>
+            </thead>
+            <tbody id="us-stocks-table-body" class="divide-y divide-dark-700/60 font-mono">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- TAB 4: INSURANCE (保險與儲蓄險) -->
+    <!-- ========================================== -->
+    <div id="view-insurance" class="tab-view space-y-6 hidden">
+      
+      <div class="card-panel p-4 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-sm font-bold text-slate-200">🛡️ 保險與美元儲蓄險清單 (共 6 筆真實保單)</h2>
+          <p class="text-xs text-slate-400">儲蓄險與年金險保單管理（可自由新增保單名稱、保單幣別與現金價值）</p>
+        </div>
+        <div class="bg-dark-750 border border-dark-700 px-3 py-1.5 rounded-lg text-xs font-mono">
+          美元儲蓄險總現值：<span class="text-purple-400 font-bold text-sm" id="insurance-usd-total-sum">$131,704 USD</span>
+        </div>
+      </div>
+
+      <div class="card-panel overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-dark-900 text-slate-400 font-mono border-b border-dark-700">
+              <tr>
+                <th class="py-3 px-4">#</th>
+                <th class="py-3 px-4">歸屬銀行 / 機構</th>
+                <th class="py-3 px-4">類型</th>
+                <th class="py-3 px-4">保險名稱</th>
+                <th class="py-3 px-4">保單號碼</th>
+                <th class="py-3 px-4">被保人</th>
+                <th class="py-3 px-4">期間</th>
+                <th class="py-3 px-4 text-right">年繳保費</th>
+                <th class="py-3 px-4 text-right">累計保費 / 保額</th>
+                <th class="py-3 px-4">重要備註</th>
+              </tr>
+            </thead>
+            <tbody id="insurance-table-body" class="divide-y divide-dark-700/60">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- TAB 5: DECISION & CONSTRAINTS (白話投資決策與約束指南) -->
+    <!-- ========================================== -->
+    <div id="view-decision" class="tab-view space-y-6 hidden">
+      
+      <!-- Introduction Banner -->
+      <div class="card-panel p-5 bg-gradient-to-r from-emerald-950/40 via-dark-850 to-blue-950/40 border-emerald-500/30 space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="text-xl">🎯</span>
+            <h2 class="text-base font-bold text-white">這個分頁在做什麼？—— 您的「專屬財務安全警報系統」</h2>
+          </div>
+          <button onclick="window.openAIModal()" class="bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition cursor-pointer">
+            <span>🤖</span> <span>呼叫 AI 診斷本期策略</span>
+          </button>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          作為專注跨國資產配置與雙幣別管理（台幣 / 美金）的指數化投資人（NRA 非居民外國人稅務身分），
+          這個分頁的唯一目的，是依據您制定的 <strong>投資政策書 (IPS)</strong>，提供一個<strong>防呆、防踩雷的規則守門員</strong>，防止在跨國報稅或資產配置時犯下不可挽回的重稅或超額虧損錯誤！
+        </p>
+      </div>
+
+      <!-- The 4 Red Lines -->
+      <div class="space-y-3">
+        <h3 class="text-sm font-bold text-slate-200 flex items-center space-x-2">
+          <span>🛑</span> <span>4 大核心財務紅線（為什麼不能做這些事？）</span>
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          <!-- Red Line 1 -->
+          <div class="card-panel p-4 border-l-4 border-l-rose-500 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-rose-400">1. 絕對不要「賣出獲利股票」來做再平衡！</span>
+              <span class="text-[10px] bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded font-mono">IRC §871(a)(2)</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              <strong>為什麼？</strong> 非居民外國人在美年度居留若達到或超過 183 天時，在美股券商只要「按賣出獲利」，美國國稅局會課徵 <strong>30% 固定資本利得稅</strong>！<br>
+              <strong>該怎麼做？</strong> 想要買新標的（如愛爾蘭 ETF），一律<strong>使用閒置現金直接買進</strong>，舊有獲利美股請<strong>抱著不動</strong>避免觸發課稅。
+            </p>
+          </div>
+
+          <!-- Red Line 2 -->
+          <div class="card-panel p-4 border-l-4 border-l-amber-500 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-amber-400">2. 股票投資總額不可超過 50%（25% 最大回撤上限）</span>
+              <span class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-mono">嚴控回撤風險</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              <strong>為什麼？</strong> 設定心理承受極限為「總身家最多跌 25%」。即使遇到像 2008 年金融海嘯股市腰斬（-50%），只要股票部位不超過 50%，您的總身家跌幅就絕對不會超過 25%！<br>
+              <strong>防線原則：</strong> 依據下方即時計算的股票權重與剩餘安全加碼空間，嚴守資產配置比例。
+            </p>
+          </div>
+
+          <!-- Red Line 3 -->
+          <div class="card-panel p-4 border-l-4 border-l-cyan-500 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-cyan-400">3. 必須保留充足生活應急儲備水庫（12~24 個月）</span>
+              <span class="text-[10px] bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded font-mono">生活應急備用金</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              <strong>為什麼？</strong> 充足的現金儲備讓您無論遇到收入中斷、緊急醫療或臨時大額支出，都永遠不需要被迫在股市低點賤賣股票變現。<br>
+              <strong>防線原則：</strong> 扣除設定的應急備用金後，剩餘的高流動性資金方可作為分批佈局的閒置現金。
+            </p>
+          </div>
+
+          <!-- Red Line 4 -->
+          <div class="card-panel p-4 border-l-4 border-l-purple-500 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-purple-400">4. 美股資產超過 $6 萬美元面臨高達 40% 遺產稅風險</span>
+              <span class="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded font-mono">美國遺產稅避險</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              <strong>為什麼？</strong> 非美籍外國人持有美國註冊股票（US-situs），遺產稅免稅額僅有超低的 <strong>$60,000 USD</strong>。<br>
+              <strong>該怎麼做？</strong> 未來長期投資全球大盤，建議透過 Interactive Brokers (IBKR) 買入<strong>愛爾蘭註冊累積型 ETF（如 VWRA、SWRD）</strong>，不僅完全免除美國遺產稅，還能避開 30% 股息預扣稅！
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Operating Modes -->
+      <div class="space-y-3">
+        <h3 class="text-sm font-bold text-slate-200 flex items-center space-x-2">
+          <span>⏱️</span> <span>4 種運作模式（我平常需要常常操作嗎？）</span>
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="card-panel p-4 space-y-2">
+            <div class="flex items-center space-x-2">
+              <span class="text-blue-400 font-bold font-mono">Mode S (Setup)</span>
+            </div>
+            <p class="text-xs text-slate-300"><strong>現在階段</strong>：把帳目、銀行、券商架構理清楚，確認所有保單與現金數字。</p>
+          </div>
+          <div class="card-panel p-4 space-y-2">
+            <div class="flex items-center space-x-2">
+              <span class="text-emerald-400 font-bold font-mono">Mode W (Weekly)</span>
+            </div>
+            <p class="text-xs text-slate-300"><strong>每週日常</strong>：花 3 分鐘看一下看板，純紀錄不交易、不頻繁操作。</p>
+          </div>
+          <div class="card-panel p-4 space-y-2">
+            <div class="flex items-center space-x-2">
+              <span class="text-amber-400 font-bold font-mono">Mode Q (Quarterly)</span>
+            </div>
+            <p class="text-xs text-slate-300"><strong>每季審查</strong>：每 3 個月才檢視一次，將累積的閒置薪水/資金，定期定額買入全球 ETF。</p>
+          </div>
+          <div class="card-panel p-4 space-y-2">
+            <div class="flex items-center space-x-2">
+              <span class="text-rose-400 font-bold font-mono">Mode E (Event)</span>
+            </div>
+            <p class="text-xs text-slate-300"><strong>重大事件</strong>：拿到綠卡、轉換教職、稅籍變更或回台時，才做整體的重大調整。</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- TAB 6: DATA & EXPORT (資料匯出與備份) -->
+    <!-- ========================================== -->
+    <div id="view-data" class="tab-view space-y-6 hidden">
+      
+      <div class="card-panel p-5 space-y-4">
+        <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+          <span>📥</span> <span>時間戳備份與試算表 (ODS/Excel) 匯出</span>
+        </h3>
+        <p class="text-xs text-slate-300">
+          全站資料已由瀏覽器 LocalStorage 即時自動秒存。您可以隨時匯出相容於 Excel / LibreOffice 的 UTF-8 BOM CSV 檔案，或下載完整 JSON 備份檔。
+        </p>
+
+        <div class="flex flex-wrap gap-2.5 pt-2">
+          <!-- Local JSON File Upload -->
+          <input type="file" id="input-json-file-picker" accept=".json" class="hidden" onchange="window.handleJSONFileUpload(event)">
+          <button onclick="document.getElementById('input-json-file-picker').click()" class="bg-emerald-700/80 hover:bg-emerald-600 text-xs text-white px-3.5 py-2 rounded-lg border border-emerald-500/50 transition flex items-center space-x-1.5 cursor-pointer font-semibold shadow">
+            <span>📂</span> <span>匯入本地 JSON 數據 (finance_data.json)</span>
+          </button>
+          <button onclick="window.generateBackupDownload()" class="bg-dark-700 hover:bg-dark-600 text-xs text-slate-200 px-3.5 py-2 rounded-lg border border-dark-600 transition flex items-center space-x-1.5 cursor-pointer">
+            <span>📦</span> <span>下載 JSON 時間戳備份</span>
+          </button>
+          <button onclick="window.exportCSV('snapshots')" class="bg-dark-700 hover:bg-dark-600 text-xs text-slate-200 px-3.5 py-2 rounded-lg border border-dark-600 transition flex items-center space-x-1.5 cursor-pointer">
+            <span>📊</span> <span>匯出快照總覽 CSV</span>
+          </button>
+          <button onclick="window.exportCSV('stocks')" class="bg-dark-700 hover:bg-dark-600 text-xs text-slate-200 px-3.5 py-2 rounded-lg border border-dark-600 transition flex items-center space-x-1.5 cursor-pointer">
+            <span>📈</span> <span>匯出股票明細 CSV</span>
+          </button>
+          <button onclick="window.exportCSV('insurance')" class="bg-dark-700 hover:bg-dark-600 text-xs text-slate-200 px-3.5 py-2 rounded-lg border border-dark-600 transition flex items-center space-x-1.5 cursor-pointer">
+            <span>🛡️</span> <span>匯出保單清單 CSV</span>
+          </button>
+          <button onclick="window.clearLocalStorageCache()" class="bg-rose-900/40 hover:bg-rose-800 text-rose-300 text-xs px-3.5 py-2 rounded-lg border border-rose-700/50 transition flex items-center space-x-1.5 cursor-pointer" title="清除瀏覽器暫存並重設回基準檔案">
+            <span>🧹</span> <span>重設瀏覽器快取</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Raw JSON Inspector -->
+      <div class="card-panel p-4 space-y-2">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-bold text-slate-300 font-mono uppercase">當前記憶體中 JSON 數據預覽</h3>
+          <span class="text-[11px] text-slate-500 font-mono">唯讀預覽</span>
+        </div>
+        <textarea id="raw-json-inspector" class="w-full h-64 bg-dark-900 border border-dark-700 rounded-lg p-3 text-xs font-mono text-emerald-400/90 focus:outline-none" readonly></textarea>
+      </div>
+
+    </div>
+
+  </main>
+
+
+  <!-- ======================================================= -->
+  <!-- MODAL: AI FINANCIAL ADVISOR (AI 財務總結與策略分析彈窗) -->
+  <!-- ======================================================= -->
+  <div id="modal-ai-advisor" class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="bg-dark-800 border border-dark-700 rounded-xl w-full max-w-3xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+      
+      <!-- Modal Header -->
+      <div class="px-5 py-3.5 border-b border-dark-700 bg-gradient-to-r from-purple-950/60 to-dark-750 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="text-xl">🤖</span>
+          <div>
+            <h3 class="text-sm font-bold text-white">AI 財務總結與資金策略建議</h3>
+            <p class="text-[11px] text-purple-300">基於當前快照 vs 上一期變動 &amp; 跨國 IPS 規範深度分析</p>
+          </div>
+        </div>
+        <button onclick="window.closeAIModal()" class="text-slate-400 hover:text-white text-lg font-bold px-2 py-0.5 rounded cursor-pointer">&times;</button>
+      </div>
+
+      <!-- Optional API Key Settings Strip -->
+      <div class="bg-dark-900 px-5 py-2.5 border-b border-dark-700 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div class="flex items-center space-x-2">
+          <span class="text-slate-400">⚡ 模式：</span>
+          <span class="text-emerald-400 font-semibold" id="ai-engine-mode-label">自動載入中...</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <input type="password" id="gemini-api-key-input" placeholder="可在此貼上 Gemini Key 或由 env.js 自動帶入" class="table-input text-xs px-2.5 py-1 rounded font-mono w-60 text-white">
+          <button onclick="window.generateAIAnalysis(true)" class="bg-purple-600 hover:bg-purple-500 text-white font-bold px-3 py-1 rounded text-xs transition flex items-center space-x-1 cursor-pointer">
+            <span>✨</span> <span>即時診斷</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Scrollable Analysis Content Body -->
+      <div class="flex-1 overflow-y-auto p-5 space-y-4 text-xs leading-relaxed max-h-[65vh]" id="ai-analysis-output">
+        <!-- Dynamically rendered AI Analysis Report -->
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-5 py-3 border-t border-dark-700 bg-dark-750 flex items-center justify-between">
+        <span class="text-[11px] text-slate-400">💡 建議每季 (Mode Q) 或重要資產變動時進行審查</span>
+        <button type="button" onclick="window.closeAIModal()" class="bg-dark-700 hover:bg-dark-600 text-slate-200 text-xs px-4 py-1.5 rounded-lg transition font-medium cursor-pointer">關閉</button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ======================================================= -->
+  <!-- MODAL: SPREADSHEET-STYLE TABLE EDITOR (按銀行分類填寫) -->
+  <!-- ======================================================= -->
+  <div id="modal-snapshot-editor" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="bg-dark-800 border border-dark-700 rounded-xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+      
+      <!-- Modal Header -->
+      <div class="px-5 py-3.5 border-b border-dark-700 bg-dark-750 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="text-lg" id="modal-title-icon">➕</span>
+          <h3 class="text-sm font-bold text-white" id="modal-snapshot-title">新增資產快照 (依銀行機構分類填寫)</h3>
+        </div>
+        <button onclick="window.closeSnapshotModal()" class="text-slate-400 hover:text-white text-lg font-bold px-2 py-0.5 rounded cursor-pointer">&times;</button>
+      </div>
+
+      <!-- Modal Live Summary Bar -->
+      <div class="bg-dark-900/90 px-5 py-2.5 border-b border-dark-700 grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs font-mono">
+        <div>
+          <span class="text-slate-400">快照日期:</span>
+          <input type="date" id="modal-input-date" class="table-input rounded px-2 py-1 text-white font-mono w-full mt-0.5 text-xs">
+        </div>
+        <div>
+          <span class="text-slate-400">美元匯率:</span>
+          <input type="number" step="0.01" id="modal-input-rate" class="table-input rounded px-2 py-1 text-emerald-400 font-mono font-bold w-full mt-0.5 text-xs text-right">
+        </div>
+        <div>
+          <span class="text-slate-400">備註說明:</span>
+          <input type="text" id="modal-input-note" placeholder="例如：8月資產盤點" class="table-input rounded px-2 py-1 text-slate-200 w-full mt-0.5 text-xs">
+        </div>
+        <div class="bg-dark-800 p-1.5 rounded border border-dark-700 flex flex-col justify-center text-right">
+          <span class="text-[11px] text-slate-400">即時試算總資產 (TWD)</span>
+          <span class="text-sm font-bold text-emerald-400" id="modal-live-total-twd">NT$ --</span>
+        </div>
+      </div>
+
+      <!-- Modal Toolbar -->
+      <div class="px-5 py-2 bg-dark-750/70 border-b border-dark-700 flex items-center justify-between text-xs">
+        <div class="flex items-center space-x-2">
+          <button type="button" id="btn-modal-clone-prev" onclick="window.cloneValuesToModal()" class="bg-dark-700 hover:bg-dark-600 text-slate-200 px-3 py-1 rounded border border-dark-600 font-medium transition cursor-pointer">
+            📋 帶入上一期數值 (Clone)
+          </button>
+          <span class="text-slate-400 text-[11px]">依銀行歸戶 • 支援 <kbd class="bg-dark-900 px-1 py-0.5 rounded border border-dark-700">Tab</kbd> / <kbd class="bg-dark-900 px-1 py-0.5 rounded border border-dark-700">Enter</kbd> 連續輸入</span>
+        </div>
+        <span class="text-[11px] text-slate-400">共 26 個帳戶</span>
+      </div>
+
+      <!-- Modal Scrollable Table Grid Body -->
+      <div class="flex-1 overflow-y-auto p-5 space-y-4 max-h-[55vh]" id="modal-table-container">
+        <!-- Dynamically rendered 6 Bank Institution table sections -->
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-5 py-3 border-t border-dark-700 bg-dark-750 flex items-center justify-between">
+        <div class="text-xs text-rose-400 hidden" id="modal-error-text">請填寫有效日期與大於 0 的匯率</div>
+        <div class="flex items-center space-x-2 ml-auto">
+          <button type="button" onclick="window.closeSnapshotModal()" class="bg-dark-700 hover:bg-dark-600 text-slate-300 text-xs px-4 py-2 rounded-lg transition font-medium cursor-pointer">取消</button>
+          <button type="button" onclick="window.saveModalSnapshot()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-5 py-2 rounded-lg font-bold transition flex items-center space-x-1.5 shadow-sm cursor-pointer">
+            <span>💾</span> <span>確認儲存快照</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ======================================================= -->
+  <!-- MODAL: STOCK POSITION EDITOR (台美股新增與編輯彈窗) -->
+  <!-- ======================================================= -->
+  <div id="modal-stock-editor" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="bg-dark-800 border border-dark-700 rounded-xl w-full max-w-md flex flex-col shadow-2xl overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-dark-700 bg-dark-750 flex items-center justify-between">
+        <h3 class="text-sm font-bold text-white" id="modal-stock-title">編輯股票部位</h3>
+        <button onclick="window.closeStockModal()" class="text-slate-400 hover:text-white text-lg font-bold px-2 py-0.5 rounded cursor-pointer">&times;</button>
+      </div>
+      
+      <div class="p-5 space-y-3.5 text-xs">
+        <input type="hidden" id="stock-edit-market" value="TW">
+        <input type="hidden" id="stock-edit-index" value="-1">
+
+        <div id="stock-input-account-group">
+          <label class="block text-slate-400 mb-1">所屬券商帳戶</label>
+          <select id="stock-input-account" class="table-input w-full rounded px-2.5 py-1.5 font-mono">
+            <option value="玉山證券">玉山證券 (台股)</option>
+            <option value="Firstrade">Firstrade (美股)</option>
+            <option value="Interactive Brokers">Interactive Brokers (美股)</option>
+            <option value="Charles Schwab">Charles Schwab (美股)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1">標的代碼 (Ticker)</label>
+          <input type="text" id="stock-input-ticker" placeholder="例如：2330 或 NVDA" class="table-input w-full rounded px-2.5 py-1.5 font-mono uppercase font-bold text-white">
+        </div>
+
+        <div id="stock-input-name-group">
+          <label class="block text-slate-400 mb-1">標的名稱</label>
+          <input type="text" id="stock-input-name" placeholder="例如：台積電" class="table-input w-full rounded px-2.5 py-1.5 text-slate-200">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">持有股數</label>
+            <input type="number" step="any" id="stock-input-shares" placeholder="0" class="table-input w-full rounded px-2.5 py-1.5 font-mono text-right text-white">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">最新市價</label>
+            <input type="number" step="any" id="stock-input-price" placeholder="0.00" class="table-input w-full rounded px-2.5 py-1.5 font-mono text-right text-emerald-400 font-bold">
+          </div>
+        </div>
+
+        <div id="stock-input-cost-group">
+          <label class="block text-slate-400 mb-1">總買入成本 (NTD，可留空自動換算)</label>
+          <input type="number" step="any" id="stock-input-cost" placeholder="0" class="table-input w-full rounded px-2.5 py-1.5 font-mono text-right text-slate-300">
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1">備註說明</label>
+          <input type="text" id="stock-input-note" placeholder="例如：長期核心持股" class="table-input w-full rounded px-2.5 py-1.5 text-slate-300">
+        </div>
+      </div>
+
+      <div class="px-5 py-3 border-t border-dark-700 bg-dark-750 flex items-center justify-end space-x-2">
+        <button type="button" onclick="window.closeStockModal()" class="bg-dark-700 hover:bg-dark-600 text-slate-300 text-xs px-3.5 py-1.5 rounded-lg transition">取消</button>
+        <button type="button" onclick="window.saveStockModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-4 py-1.5 rounded-lg font-bold transition flex items-center space-x-1 shadow">
+          <span>💾</span> <span>儲存部位並同步快照</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+    <!-- ======================================================= -->
+  <!-- MODAL: DELETE SNAPSHOT CONFIRMATION (安全刪除確認彈窗) -->
+  <!-- ======================================================= -->
+  <div id="modal-delete-snapshot-confirm" class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="bg-dark-800 border border-rose-500/50 rounded-xl w-full max-w-md flex flex-col shadow-2xl overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-dark-700 bg-rose-950/40 flex items-center justify-between">
+        <div class="flex items-center space-x-2 text-rose-300">
+          <span class="text-lg">⚠️</span>
+          <h3 class="text-sm font-bold text-white">確認刪除此筆快照？</h3>
+        </div>
+        <button onclick="window.closeDeleteSnapshotModal()" class="text-slate-400 hover:text-white text-lg font-bold px-2 py-0.5 rounded cursor-pointer">&times;</button>
+      </div>
+
+      <div class="p-5 space-y-3.5 text-xs">
+        <input type="hidden" id="delete-target-index" value="-1">
+
+        <div class="bg-dark-900 p-3.5 rounded-lg border border-dark-700 space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="text-slate-400">快照日期：</span>
+            <span class="text-white font-mono font-bold text-sm" id="del-modal-date">--</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-slate-400">該期總淨值：</span>
+            <span class="text-emerald-400 font-mono font-bold" id="del-modal-total">--</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-slate-400">備註說明：</span>
+            <span class="text-slate-300 font-sans" id="del-modal-note">--</span>
+          </div>
+        </div>
+
+        <div class="bg-rose-950/30 border border-rose-500/30 p-3 rounded-lg text-rose-200 text-[11px] leading-relaxed">
+          <strong>⚠️ 安全提醒：</strong> 刪除後將自瀏覽器 LocalStorage 快取中永久移除此期紀錄。若有需要，您可於「資料匯出」分頁隨時下載完整備份。
+        </div>
+      </div>
+
+      <div class="px-5 py-3 border-t border-dark-700 bg-dark-750 flex items-center justify-end space-x-2">
+        <button type="button" onclick="window.closeDeleteSnapshotModal()" class="bg-dark-700 hover:bg-dark-600 text-slate-300 text-xs px-4 py-2 rounded-lg font-medium transition cursor-pointer">取消</button>
+        <button type="button" onclick="window.executeDeleteSnapshot()" class="bg-rose-600 hover:bg-rose-500 text-white text-xs px-4 py-2 rounded-lg font-bold transition flex items-center space-x-1.5 shadow cursor-pointer">
+          <span>🗑️</span> <span>確認永久刪除</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- MODAL: ACCOUNT MANAGER (動態新增與刪除銀行/券商帳戶) -->
+  <!-- ======================================================= -->
+  <div id="modal-account-manager" class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="bg-dark-800 border border-cyan-500/40 rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      
+      <!-- Header -->
+      <div class="px-5 py-3.5 border-b border-dark-700 bg-gradient-to-r from-cyan-950/60 to-dark-750 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="text-xl">🏦</span>
+          <div>
+            <h3 class="text-sm font-bold text-white">金融機構與帳戶管理 (動態新增與自訂)</h3>
+            <p class="text-[11px] text-cyan-300">支援新增/刪除台幣與美金之銀行活定存、證券券商與保險帳戶</p>
+          </div>
+        </div>
+        <button onclick="window.closeAccountManagerModal()" class="text-slate-400 hover:text-white text-lg font-bold px-2 py-0.5 rounded cursor-pointer">&times;</button>
+      </div>
+
+      <!-- Add New Account Form Strip -->
+      <div class="bg-dark-900/90 border-b border-dark-700 p-4 space-y-3">
+        <h4 class="text-xs font-bold text-slate-200 flex items-center space-x-1.5">
+          <span>➕</span> <span>新增金融帳戶</span>
+        </h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 text-xs">
+          <div>
+            <label class="block text-slate-400 text-[11px] mb-1">帳戶名稱 (唯一鍵值) *</label>
+            <input type="text" id="acc-input-key" placeholder="例：台新 Richart 或 Schwab" class="table-input w-full rounded px-2.5 py-1.5 text-white">
+          </div>
+          <div>
+            <label class="block text-slate-400 text-[11px] mb-1">計價幣別 *</label>
+            <select id="acc-input-currency" class="table-input w-full rounded px-2.5 py-1.5 font-mono">
+              <option value="TWD">TWD (新台幣)</option>
+              <option value="USD">USD (美元)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 text-[11px] mb-1">功能分類 *</label>
+            <select id="acc-input-category" class="table-input w-full rounded px-2.5 py-1.5">
+              <option value="cash">現金儲蓄 (cash)</option>
+              <option value="tw_stock">台股投資 (tw_stock)</option>
+              <option value="us_stock">美股投資 (us_stock)</option>
+              <option value="insurance">儲蓄保單 (insurance)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 text-[11px] mb-1">儲蓄類別 / 性質</label>
+            <select id="acc-input-type" class="table-input w-full rounded px-2.5 py-1.5">
+              <option value="demand">活期存款 (demand)</option>
+              <option value="time">定期儲蓄 (time)</option>
+              <option value="investment">證券投資帳戶</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex items-center justify-between pt-1">
+          <div class="flex items-center space-x-2 flex-1 mr-3">
+            <label class="text-slate-400 text-[11px] whitespace-nowrap">金融機構歸屬：</label>
+            <input type="text" id="acc-input-inst" placeholder="選填，例：台新銀行、Charles Schwab 或留空自動推斷" class="table-input flex-1 rounded px-2.5 py-1 text-xs text-slate-300">
+          </div>
+          <button type="button" onclick="window.submitAddAccount()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-4 py-1.5 rounded-lg transition flex items-center space-x-1 shadow cursor-pointer">
+            <span>➕</span> <span>確認新增帳戶</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Current Accounts List -->
+      <div class="flex-1 overflow-y-auto p-4 space-y-2 max-h-[50vh]">
+        <div class="flex items-center justify-between text-xs text-slate-400 pb-1 border-b border-dark-700">
+          <span>現有追蹤帳戶列表 (<span id="acc-list-count" class="font-mono text-cyan-400 font-bold">--</span> 戶)</span>
+          <span class="text-[11px]">刪除帳戶將自所有歷史快照中移除該欄位</span>
+        </div>
+        <div id="acc-manager-list" class="space-y-1.5 font-mono text-xs">
+          <!-- Dynamically populated account list items -->
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="px-5 py-3 border-t border-dark-700 bg-dark-750 flex items-center justify-between">
+        <span class="text-[11px] text-slate-400">💡 帳戶新增與刪除將即時更新資產總覽、各期快照矩陣與快照輸入表單</span>
+        <button type="button" onclick="window.closeAccountManagerModal()" class="bg-dark-700 hover:bg-dark-600 text-slate-200 text-xs px-4 py-1.5 rounded-lg transition font-medium cursor-pointer">完成並關閉</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+
+  <!-- ======================================================= -->
+  <!-- JAVASCRIPT APP LOGIC (MULTI-LAYER DATA PERSISTENCE) -->
+  <!-- ======================================================= -->
+  <script>
+    // 1. Baseline State
+    const initialEmbeddedState = {
+  "meta": {
+    "version": 1,
+    "created": "2026-08-09",
+    "currency_note": "TWD 帳戶以新台幣記，USD 帳戶以美元記；換算總資產時用該筆快照當時的 usd_rate。",
+    "migrated_from": "Open Source Clean Dataset (精簡開源示範數據)",
+    "pending_note": "示範數據供 GitHub 開源展示與功能體驗使用。",
+    "known_gaps": [
+      "精簡示範架構：1台股券商、1美股券商、1台灣銀行(台/美)、1美國銀行",
+      "此數據集供公開展示、功能驗證與新用戶起手使用"
+    ]
+  },
+  "accounts_meta": [
+    {
+      "key": "玉山活存",
+      "currency": "TWD",
+      "category": "cash",
+      "deposit_type": "demand",
+      "institution": "玉山銀行"
+    },
+    {
+      "key": "玉山美金",
+      "currency": "USD",
+      "category": "cash",
+      "deposit_type": "demand",
+      "institution": "玉山銀行"
+    },
+    {
+      "key": "Chase Checking",
+      "currency": "USD",
+      "category": "cash",
+      "deposit_type": "demand",
+      "institution": "Chase Bank"
+    },
+    {
+      "key": "玉山證券",
+      "currency": "TWD",
+      "category": "tw_stock",
+      "institution": "玉山證券"
+    },
+    {
+      "key": "Firstrade",
+      "currency": "USD",
+      "category": "us_stock",
+      "institution": "Firstrade"
+    }
+  ],
+  "snapshots": [
+    {
+      "date": "2025-10-15",
+      "usd_rate": 31.8,
+      "accounts": {
+        "玉山活存": 350000,
+        "玉山美金": 12000,
+        "Chase Checking": 8000,
+        "玉山證券": 800000,
+        "Firstrade": 30000
+      },
+      "note": "2025 Q4 季末盤點"
+    },
+    {
+      "date": "2026-01-15",
+      "usd_rate": 32.1,
+      "accounts": {
+        "玉山活存": 420000,
+        "玉山美金": 15000,
+        "Chase Checking": 10000,
+        "玉山證券": 950000,
+        "Firstrade": 36000
+      },
+      "note": "2026 年初資產配置"
+    },
+    {
+      "date": "2026-04-15",
+      "usd_rate": 32.35,
+      "accounts": {
+        "玉山活存": 500000,
+        "玉山美金": 18000,
+        "Chase Checking": 12000,
+        "玉山證券": 1100000,
+        "Firstrade": 42000
+      },
+      "note": "2026 Q2 定期定額投入"
+    },
+    {
+      "date": "2026-07-15",
+      "usd_rate": 32.5,
+      "accounts": {
+        "玉山活存": 600000,
+        "玉山美金": 20000,
+        "Chase Checking": 15000,
+        "玉山證券": 1250000,
+        "Firstrade": 50000
+      },
+      "note": "2026 Q3 年中資產總結"
+    }
+  ],
+  "tw_stocks": [
+    {
+      "ticker": "2330",
+      "name": "台積電",
+      "shares": 1000,
+      "price": 950,
+      "cost_total": 800000,
+      "market_value": 950000,
+      "unrealized_pl": 150000,
+      "roi": 0.1875,
+      "broker": "玉山證券",
+      "note": "核心權值股，定期定額存股"
+    },
+    {
+      "ticker": "0050",
+      "name": "元大台灣50",
+      "shares": 2000,
+      "price": 170,
+      "cost_total": 300000,
+      "market_value": 340000,
+      "unrealized_pl": 40000,
+      "roi": 0.1333,
+      "broker": "玉山證券",
+      "note": "大盤指數 ETF"
+    }
+  ],
+  "us_stocks": [
+    {
+      "ticker": "VOO",
+      "name": "Vanguard S&P 500 ETF",
+      "shares": 50,
+      "price": 510,
+      "cost_total": 22500,
+      "market_value": 25500,
+      "broker": "Firstrade",
+      "situs": "US",
+      "note": "標普500指數 ETF"
+    },
+    {
+      "ticker": "QQQ",
+      "name": "Invesco QQQ Trust",
+      "shares": 30,
+      "price": 480,
+      "cost_total": 12000,
+      "market_value": 14400,
+      "broker": "Firstrade",
+      "situs": "US",
+      "note": "納斯達克100科技成長"
+    },
+    {
+      "ticker": "NVDA",
+      "name": "NVIDIA Corporation",
+      "shares": 80,
+      "price": 125,
+      "cost_total": 8000,
+      "market_value": 10000,
+      "broker": "Firstrade",
+      "situs": "US",
+      "note": "AI 半導體龍頭"
+    }
+  ],
+  "insurance": [],
+  "decision_framework": {
+    "monthly_burn_rate_twd": 60000,
+    "emergency_reserve_months": 12,
+    "max_drawdown_tolerance_pct": 25,
+    "target_equity_weight_pct": 50,
+    "us_estate_tax_threshold_usd": 60000
+  },
+  "log": [
+    {
+      "date": "2026-07-15",
+      "note": "精簡範本初始化完成：包含 1 台股券商、1 美股券商、1 台灣銀行 (台/美)、1 美國銀行"
+    }
+  ],
+  "watch_notes": {}
+};
+
+    // 2. Pure LocalStorage Auto-Persistence
+    let restoredState = null;
+    try {
+      const cached = localStorage.getItem('personal_finance_state_v2');
+      if (cached) {
+        restoredState = JSON.parse(cached);
+      }
+    } catch (e) {
+      console.warn('LocalStorage read error:', e);
+    }
+
+    // Global App State
+    window.state = restoredState || initialEmbeddedState;
+    window.activeSnapshotIndex = (window.state.snapshots && window.state.snapshots.length > 0) 
+      ? window.state.snapshots.length - 1 
+      : 0;
+    window.charts = {};
+
+    // 1. Dynamic Functional Asset Categories & Institutions Generator
+    window.getFunctionalCategories = function () {
+      const meta = (window.state && window.state.accounts_meta) || [];
+      const twdCashKeys = meta.filter(a => a.currency === 'TWD' && a.category === 'cash').map(a => a.key);
+      const usdCashKeys = meta.filter(a => a.currency === 'USD' && a.category === 'cash').map(a => a.key);
+      const investKeys = meta.filter(a => a.category === 'tw_stock' || a.category === 'us_stock').map(a => a.key);
+      const insKeys = meta.filter(a => a.category === 'insurance').map(a => a.key);
+
+      const isTimeDeposit = (k) => {
+        const a = meta.find(x => x.key === k);
+        return (a && a.deposit_type === 'time') || k.includes('定存');
+      };
+
+      const twdDemand = twdCashKeys.filter(k => !isTimeDeposit(k));
+      const twdTime = twdCashKeys.filter(k => isTimeDeposit(k));
+      const usdDemand = usdCashKeys.filter(k => !isTimeDeposit(k));
+      const usdTime = usdCashKeys.filter(k => isTimeDeposit(k));
+
+      return [
+        {
+          id: 'twd_cash',
+          title: '🇹🇼 台幣現金與定存帳戶',
+          subtitle: '高流動性與安全防線',
+          icon: '🇹🇼',
+          color: 'text-emerald-400',
+          bgColor: 'border-emerald-500/30 bg-emerald-950/10',
+          keys: twdCashKeys,
+          sections: [
+            { id: 'twd_demand', title: '台幣活存 (高流動性)', icon: '🟢', color: 'text-emerald-400', keys: twdDemand },
+            { id: 'twd_time', title: '台幣定存 (穩定利息)', icon: '🔒', color: 'text-slate-300', keys: twdTime }
+          ]
+        },
+        {
+          id: 'usd_cash',
+          title: '🇺🇸 美元存款與定存部位',
+          subtitle: '隨時可 ACH/匯入 IBKR',
+          icon: '💵',
+          color: 'text-cyan-400',
+          bgColor: 'border-cyan-500/30 bg-cyan-950/10',
+          keys: usdCashKeys,
+          sections: [
+            { id: 'usd_demand', title: '美金活期 (隨時可動)', icon: '🟢', color: 'text-cyan-400', keys: usdDemand },
+            { id: 'usd_time', title: '美金定存 (高利鎖存)', icon: '🔒', color: 'text-slate-300', keys: usdTime }
+          ]
+        },
+        {
+          id: 'investments',
+          title: '📈 投資與證券帳戶',
+          subtitle: '台股、美股與海外券商',
+          icon: '📈',
+          color: 'text-blue-400',
+          bgColor: 'border-blue-500/30 bg-blue-950/10',
+          keys: investKeys
+        },
+        {
+          id: 'insurance',
+          title: '🛡️ 美元儲蓄險保單',
+          subtitle: '保證現金價值歸戶',
+          icon: '🛡️',
+          color: 'text-purple-400',
+          bgColor: 'border-purple-500/30 bg-purple-950/10',
+          keys: insKeys
+        }
+      ];
+    };
+
+    window.getBankInstitutions = function () {
+      const meta = (window.state && window.state.accounts_meta) || [];
+      const groupsMap = new Map();
+
+      meta.forEach(acc => {
+        let inst = acc.institution;
+        if (!inst) {
+          const k = acc.key;
+          if (k.includes('玉山')) inst = '玉山商業銀行 (含證券)';
+          else if (k.includes('Chase') || k.includes('美國') || k.includes('US')) inst = '美國本土金融機構 (US Banks)';
+          else if (k.includes('Firstrade') || k.includes('Schwab') || k.includes('IBKR') || k.includes('券商')) inst = '海外美股券商 (US Brokers)';
+          else if (acc.currency === 'USD') inst = '其他外幣與海外金融帳戶';
+          else inst = '其他台灣本土金融機構';
+        }
+
+        if (!groupsMap.has(inst)) {
+          let icon = '🏦';
+          let color = 'text-teal-400';
+          if (inst.includes('玉山')) { icon = '⛰️'; color = 'text-emerald-400'; }
+          else if (inst.includes('美國') || inst.includes('US')) { icon = '🇺🇸'; color = 'text-blue-400'; }
+          else if (inst.includes('券商') || inst.includes('Broker')) { icon = '📈'; color = 'text-indigo-400'; }
+
+          groupsMap.set(inst, { institution: inst, icon, color, keys: [] });
+        }
+        groupsMap.get(inst).keys.push(acc.key);
+      });
+
+      return Array.from(groupsMap.values());
+    };
+
+    window.syncCategoryDefinitions = function () {
+      window.FUNCTIONAL_CATEGORIES = window.getFunctionalCategories();
+      window.BANK_INSTITUTIONS = window.getBankInstitutions();
+    };
+
+    window.syncCategoryDefinitions();
+
+    // Persist to LocalStorage
+    window.persistStateLocally = function () {
+      try {
+        localStorage.setItem('personal_finance_state_v2', JSON.stringify(window.state));
+      } catch (e) {
+        console.warn('LocalStorage save error:', e);
+      }
+    };
+
+    window.clearLocalStorageCache = function () {
+      if (confirm('確定要清除瀏覽器快取並重設為檔案基準值嗎？')) {
+        localStorage.removeItem('personal_finance_state_v2');
+        window.state = initialEmbeddedState;
+        window.activeSnapshotIndex = window.state.snapshots.length - 1;
+        window.renderAll();
+        showToast('已重設為基準檔案數據！', 'info');
+      }
+    };
+
+    // Utility: Safe HTML Escape
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Utility: Toast Notifications
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+      const toast = document.createElement('div');
+      const bgColors = {
+        success: 'bg-emerald-600 text-white border-emerald-500',
+        error: 'bg-rose-600 text-white border-rose-500',
+        info: 'bg-slate-800 text-slate-100 border-slate-700'
+      };
+      toast.className = `${bgColors[type] || bgColors.info} border px-4 py-2.5 rounded-lg shadow-lg text-xs font-medium toast-animate flex items-center space-x-2`;
+      toast.innerHTML = `<span>${type === 'success' ? '✅' : (type === 'error' ? '⚠️' : 'ℹ️')}</span><span>${escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+      }, 3200);
+    }
+
+    // Calculation: Net Worth for a given snapshot
+    window.calculateNetWorth = function (snapshot) {
+      if (!snapshot || !snapshot.accounts) {
+        return { net_worth_twd: 0, net_worth_usd: 0, twd_accounts: 0, usd_accounts_usd: 0, usd_accounts_twd: 0 };
+      }
+      const rate = Number(snapshot.usd_rate) || 32.0;
+      const accountsMeta = window.state.accounts_meta || [];
+      const twdKeys = accountsMeta.filter(a => a.currency === 'TWD').map(a => a.key);
+      const usdKeys = accountsMeta.filter(a => a.currency === 'USD').map(a => a.key);
+
+      let sumTWD = twdKeys.reduce((sum, k) => sum + (Number(snapshot.accounts[k]) || 0), 0);
+      let sumUSD = usdKeys.reduce((sum, k) => sum + (Number(snapshot.accounts[k]) || 0), 0);
+
+      // Fallback for ad-hoc/mock accounts in snapshots not declared in accounts_meta
+      Object.keys(snapshot.accounts).forEach(k => {
+        if (!twdKeys.includes(k) && !usdKeys.includes(k)) {
+          const val = Number(snapshot.accounts[k]) || 0;
+          if (k.toLowerCase().includes('usd') || k.includes('美金') || k === 'Chase' || k === 'Firstrade' || k.toLowerCase().includes('us')) {
+            sumUSD += val;
+          } else {
+            sumTWD += val;
+          }
+        }
+      });
+
+      const usdInTWD = sumUSD * rate;
+      const totalTWD = sumTWD + usdInTWD;
+      const totalUSD = rate > 0 ? totalTWD / rate : 0;
+
+      return {
+        net_worth_twd: totalTWD,
+        net_worth_usd: totalUSD,
+        twd_accounts: sumTWD,
+        usd_accounts_usd: sumUSD,
+        usd_accounts_twd: usdInTWD
+      };
+    };
+
+    // Action: Select Active Snapshot
+    window.selectSnapshot = function (index) {
+      const snapshots = window.state.snapshots || [];
+      if (index < 0 || index >= snapshots.length) return;
+      window.activeSnapshotIndex = index;
+      window.renderAll();
+      showToast(`已切換至快照期數：${snapshots[index].date}`, 'info');
+    };
+
+    // Core Render: Updates All Views, Charts, Categories & Playbook Reactively
+    window.renderAll = function () {
+      if (window.syncCategoryDefinitions) window.syncCategoryDefinitions();
+      const state = window.state;
+      const snapshots = state.snapshots || [];
+      if (window.activeSnapshotIndex >= snapshots.length) {
+        window.activeSnapshotIndex = Math.max(0, snapshots.length - 1);
+      }
+      const isLatest = window.activeSnapshotIndex === snapshots.length - 1;
+      const currentSnap = snapshots[window.activeSnapshotIndex] || null;
+      const prevSnap = window.activeSnapshotIndex > 0 ? snapshots[window.activeSnapshotIndex - 1] : null;
+      const currentTotals = currentSnap ? window.calculateNetWorth(currentSnap) : { net_worth_twd: 0, net_worth_usd: 0, twd_accounts: 0, usd_accounts_usd: 0 };
+      const prevTotals = prevSnap ? window.calculateNetWorth(prevSnap) : null;
+      const currentRate = currentSnap ? Number(currentSnap.usd_rate) : 32.0;
+
+      // Auto-save to LocalStorage
+      window.persistStateLocally();
+
+      // 1. Top Header Badges & Select Dropdown
+      const fxElem = document.getElementById('badge-usd-rate');
+      if (fxElem) fxElem.textContent = currentRate.toFixed(2);
+
+      const snapSelect = document.getElementById('global-snapshot-select');
+      if (snapSelect) {
+        snapSelect.innerHTML = '';
+        snapshots.forEach((s, idx) => {
+          const opt = document.createElement('option');
+          opt.value = idx;
+          opt.textContent = `${s.date} ${idx === snapshots.length - 1 ? '(最新)' : ''}`;
+          if (idx === window.activeSnapshotIndex) opt.selected = true;
+          snapSelect.appendChild(opt);
+        });
+      }
+
+      const gotoLatestBtn = document.getElementById('btn-goto-latest-snap');
+      if (gotoLatestBtn) {
+        gotoLatestBtn.classList.toggle('hidden', isLatest);
+      }
+
+      // 2. Historical Banner
+      const histBanner = document.getElementById('historical-view-banner');
+      const bannerDate = document.getElementById('banner-snap-date');
+      if (histBanner) {
+        histBanner.classList.toggle('hidden', isLatest);
+        if (bannerDate && currentSnap) bannerDate.textContent = currentSnap.date;
+      }
+
+      // 3. Tab 1: Overview KPI Cards
+      const kpiTWD = document.getElementById('kpi-net-worth-twd');
+      const kpiUSD = document.getElementById('kpi-net-worth-usd');
+      const kpiGrowth = document.getElementById('kpi-growth-badge');
+      const kpiSnapLabel = document.getElementById('kpi-snap-date-label');
+      const kpiDeployable = document.getElementById('kpi-deployable-cash');
+      const kpiTotalCash = document.getElementById('kpi-total-cash');
+      const kpiRiskCap = document.getElementById('kpi-risk-capacity');
+      const kpiCurrentEq = document.getElementById('kpi-current-equity');
+      const kpiEqHeadroom = document.getElementById('kpi-equity-headroom');
+      const kpiEstate = document.getElementById('kpi-estate-tax-excess');
+      const kpiUsSitus = document.getElementById('kpi-us-situs-total');
+      const matrixSnapDate = document.getElementById('matrix-snap-date');
+
+      if (kpiTWD) kpiTWD.textContent = `NT$ ${Math.round(currentTotals.net_worth_twd).toLocaleString()}`;
+      if (kpiUSD) kpiUSD.textContent = `$ ${Math.round(currentTotals.net_worth_usd).toLocaleString()} USD`;
+      if (kpiSnapLabel && currentSnap) kpiSnapLabel.textContent = currentSnap.date;
+      if (matrixSnapDate && currentSnap) matrixSnapDate.textContent = currentSnap.date;
+
+      // Period Growth
+      if (kpiGrowth && prevTotals) {
+        const delta = currentTotals.net_worth_twd - prevTotals.net_worth_twd;
+        const pct = prevTotals.net_worth_twd > 0 ? (delta / prevTotals.net_worth_twd) * 100 : 0;
+        kpiGrowth.textContent = `${delta >= 0 ? '+' : ''}NT$ ${Math.round(delta).toLocaleString()} (${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%)`;
+        kpiGrowth.className = delta >= 0 
+          ? 'font-mono text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded'
+          : 'font-mono text-[11px] font-semibold text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded';
+      } else if (kpiGrowth) {
+        kpiGrowth.textContent = '初始基期';
+        kpiGrowth.className = 'font-mono text-[11px] text-slate-400 bg-dark-700 px-2 py-0.5 rounded';
+      }
+
+      // Cash & Deployable Calculation (Subdivided into Demand vs Time Deposits)
+      const accountsMeta = state.accounts_meta || [];
+      const isTimeDeposit = (k) => {
+        const a = accountsMeta.find(x => x.key === k);
+        return (a && a.deposit_type === 'time') || k.includes('定存');
+      };
+
+      // TWD Breakdown
+      const cashTwdKeys = accountsMeta.filter(a => a.currency === 'TWD' && a.category === 'cash').map(a => a.key);
+      const twdDemandKeys = cashTwdKeys.filter(k => !isTimeDeposit(k));
+      const twdTimeKeys = cashTwdKeys.filter(k => isTimeDeposit(k));
+      const sumTwdDemand = currentSnap ? twdDemandKeys.reduce((s, k) => s + (Number(currentSnap.accounts[k]) || 0), 0) : 0;
+      const sumTwdTime = currentSnap ? twdTimeKeys.reduce((s, k) => s + (Number(currentSnap.accounts[k]) || 0), 0) : 0;
+      const sumCashTWD = sumTwdDemand + sumTwdTime;
+
+      // USD Breakdown
+      const cashUsdKeys = accountsMeta.filter(a => a.currency === 'USD' && a.category === 'cash').map(a => a.key);
+      const usdDemandKeys = cashUsdKeys.filter(k => !isTimeDeposit(k));
+      const usdTimeKeys = cashUsdKeys.filter(k => isTimeDeposit(k));
+      const sumUsdDemand = currentSnap ? usdDemandKeys.reduce((s, k) => s + (Number(currentSnap.accounts[k]) || 0), 0) : 0;
+      const sumUsdTime = currentSnap ? usdTimeKeys.reduce((s, k) => s + (Number(currentSnap.accounts[k]) || 0), 0) : 0;
+      const sumCashUSD = sumUsdDemand + sumUsdTime;
+
+      // Global Grand Totals
+      const totalDemandTWD = sumTwdDemand + (sumUsdDemand * currentRate);
+      const totalTimeTWD = sumTwdTime + (sumUsdTime * currentRate);
+      const totalCashTWD = totalDemandTWD + totalTimeTWD;
+
+      const demandRatio = totalCashTWD > 0 ? ((totalDemandTWD / totalCashTWD) * 100).toFixed(1) : '0.0';
+      const timeRatio = totalCashTWD > 0 ? ((totalTimeTWD / totalCashTWD) * 100).toFixed(1) : '0.0';
+
+      const emergencyReserve = 2400000;
+      const deployableCash = Math.max(0, totalCashTWD - emergencyReserve);
+
+      if (kpiDeployable) kpiDeployable.textContent = `NT$ ${Math.round(deployableCash).toLocaleString()}`;
+      if (kpiTotalCash) kpiTotalCash.textContent = `NT$ ${Math.round(totalCashTWD).toLocaleString()}`;
+
+      const kpiLiquidDemand = document.getElementById('kpi-liquid-demand');
+      const kpiLiquidTime = document.getElementById('kpi-liquid-time');
+      if (kpiLiquidDemand) {
+        const pureLiquidDeployable = Math.max(0, totalDemandTWD - emergencyReserve);
+        kpiLiquidDemand.textContent = `🟢 純活存 NT$ ${Math.round(pureLiquidDeployable / 10000).toLocaleString()}萬 (秒可動)`;
+      }
+      if (kpiLiquidTime) {
+        kpiLiquidTime.textContent = `🔒 定存儲備 NT$ ${Math.round(totalTimeTWD / 10000).toLocaleString()}萬`;
+      }
+
+      // Risk Budget
+      const maxEquityCapacity = currentTotals.net_worth_twd * 0.50;
+      let twStockVal = 0;
+      let usStockUSD = 0;
+      if (currentSnap && currentSnap.accounts) {
+        const meta = window.state.accounts_meta || [];
+        meta.forEach(acc => {
+          const val = Number(currentSnap.accounts[acc.key]) || 0;
+          if (acc.category === 'tw_stock') twStockVal += val;
+          else if (acc.category === 'us_stock') usStockUSD += val;
+        });
+        if (meta.length === 0) {
+          twStockVal = Number(currentSnap.accounts['玉山證券']) || 0;
+          usStockUSD = Number(currentSnap.accounts['Firstrade']) || 0;
+        }
+      }
+      const totalEquityTWD = twStockVal + (usStockUSD * currentRate);
+      const headroom = maxEquityCapacity - totalEquityTWD;
+
+      if (kpiRiskCap) kpiRiskCap.textContent = `NT$ ${Math.round(maxEquityCapacity).toLocaleString()}`;
+      if (kpiCurrentEq) kpiCurrentEq.textContent = `NT$ ${Math.round(totalEquityTWD).toLocaleString()} (${((totalEquityTWD / currentTotals.net_worth_twd) * 100).toFixed(1)}%)`;
+      if (kpiEqHeadroom) {
+        kpiEqHeadroom.textContent = `${headroom >= 0 ? '+' : ''}NT$ ${Math.round(headroom).toLocaleString()} 額度`;
+        kpiEqHeadroom.className = headroom >= 0 ? 'text-emerald-400 font-mono font-semibold' : 'text-rose-400 font-mono font-semibold';
+      }
+
+      // Estate Tax Exposure
+      const estateExemption = 60000;
+      const estateTaxExcess = Math.max(0, usStockUSD - estateExemption);
+      if (kpiEstate) kpiEstate.textContent = `$ ${Math.round(estateTaxExcess).toLocaleString()}`;
+      if (kpiUsSitus) kpiUsSitus.textContent = `$ ${Math.round(usStockUSD).toLocaleString()} USD`;
+
+      // 5. PERIOD DELTA COMPARISON PANEL
+      const deltaCompareLabel = document.getElementById('delta-compare-label');
+      const deltaSummaryGrid = document.getElementById('delta-summary-grid');
+      const deltaHighlights = document.getElementById('delta-accounts-highlights');
+
+      if (deltaCompareLabel && currentSnap) {
+        deltaCompareLabel.textContent = prevSnap 
+          ? `(本期 ${currentSnap.date} 比較上一期 ${prevSnap.date})`
+          : `(本期 ${currentSnap.date} 為基期)`;
+      }
+
+      if (deltaSummaryGrid && currentSnap) {
+        deltaSummaryGrid.innerHTML = '';
+        if (prevSnap) {
+          const nwDiff = currentTotals.net_worth_twd - prevTotals.net_worth_twd;
+          const prevCashTWD = cashTwdKeys.reduce((s, k) => s + (Number(prevSnap.accounts[k]) || 0), 0);
+          const twdCashDiff = sumCashTWD - prevCashTWD;
+
+          const prevCashUSD = cashUsdKeys.reduce((s, k) => s + (Number(prevSnap.accounts[k]) || 0), 0);
+          const usdCashDiff = sumCashUSD - prevCashUSD;
+
+          let prevTWStockVal = 0;
+          let prevUSStockUSD = 0;
+          (window.state.accounts_meta || []).forEach(acc => {
+            const val = Number(prevSnap.accounts[acc.key]) || 0;
+            if (acc.category === 'tw_stock') prevTWStockVal += val;
+            else if (acc.category === 'us_stock') prevUSStockUSD += val;
+          });
+          const prevStockTWD = prevTWStockVal + (prevUSStockUSD * Number(prevSnap.usd_rate));
+          const stockDiff = totalEquityTWD - prevStockTWD;
+
+          const metrics = [
+            { label: '淨值總變動', val: `${nwDiff >= 0 ? '+' : ''}NT$ ${Math.round(nwDiff).toLocaleString()}`, isPos: nwDiff >= 0 },
+            { label: '台幣現金消長', val: `${twdCashDiff >= 0 ? '+' : ''}NT$ ${Math.round(twdCashDiff).toLocaleString()}`, isPos: twdCashDiff >= 0 },
+            { label: '美金存款變動', val: `${usdCashDiff >= 0 ? '+' : ''}$ ${Math.round(usdCashDiff).toLocaleString()} USD`, isPos: usdCashDiff >= 0 },
+            { label: '股票市值損益', val: `${stockDiff >= 0 ? '+' : ''}NT$ ${Math.round(stockDiff).toLocaleString()}`, isPos: stockDiff >= 0 }
+          ];
+
+          metrics.forEach(m => {
+            const div = document.createElement('div');
+            div.className = 'bg-dark-900 p-2.5 rounded-lg border border-dark-700';
+            div.innerHTML = `
+              <div class="text-[11px] text-slate-400">${escapeHtml(m.label)}</div>
+              <div class="text-sm font-bold ${m.isPos ? 'text-emerald-400' : 'text-rose-400'}">${escapeHtml(m.val)}</div>
+            `;
+            deltaSummaryGrid.appendChild(div);
+          });
+        } else {
+          deltaSummaryGrid.innerHTML = `<div class="col-span-4 text-slate-400 text-xs">第一期初始基期，無更早快照對比。</div>`;
+        }
+      }
+
+      if (deltaHighlights && currentSnap) {
+        deltaHighlights.innerHTML = '';
+        if (prevSnap) {
+          const changedAccounts = [];
+          accountsMeta.forEach(a => {
+            const curVal = Number(currentSnap.accounts[a.key]) || 0;
+            const prevVal = Number(prevSnap.accounts[a.key]) || 0;
+            const diff = curVal - prevVal;
+            if (Math.abs(diff) > 0.01) {
+              changedAccounts.push({
+                key: a.key,
+                curr: a.currency,
+                curVal,
+                prevVal,
+                diff
+              });
+            }
+          });
+
+          if (changedAccounts.length > 0) {
+            let pillsHTML = `<div class="text-[11px] text-slate-400 mb-1">💡 本期有變動帳戶 (${changedAccounts.length} 戶)：</div><div class="flex flex-wrap gap-1.5">`;
+            changedAccounts.forEach(ca => {
+              const isPos = ca.diff > 0;
+              const sign = isPos ? '+' : '';
+              const prefix = ca.curr === 'USD' ? '$' : 'NT$';
+              pillsHTML += `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono ${isPos ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/15 text-rose-300 border border-rose-500/30'}">
+                <strong class="mr-1">${escapeHtml(ca.key)}:</strong> ${sign}${prefix}${Math.round(ca.diff).toLocaleString()}
+              </span>`;
+            });
+            pillsHTML += `</div>`;
+            deltaHighlights.innerHTML = pillsHTML;
+          } else {
+            deltaHighlights.innerHTML = `<span class="text-slate-500 text-xs">本期所有 26 個帳戶餘額與上一期完全一致。</span>`;
+          }
+        }
+      }
+
+      // 6. FUNCTIONAL CATEGORIES MATRIX (四大功能分類看板：台幣 / 美金 / 投資 / 保險)
+      const funcGrid = document.getElementById('overview-functional-categories-grid');
+      if (funcGrid && currentSnap) {
+        funcGrid.innerHTML = '';
+
+        window.FUNCTIONAL_CATEGORIES.forEach(cat => {
+          const card = document.createElement('div');
+          card.className = `card-panel p-4 space-y-3 ${cat.bgColor}`;
+
+          let catSubtotalTWD = 0;
+          let catSubtotalUSD = 0;
+
+          cat.keys.forEach(k => {
+            const accMeta = accountsMeta.find(a => a.key === k);
+            const val = Number(currentSnap.accounts[k]) || 0;
+            if (accMeta && accMeta.currency === 'USD') {
+              catSubtotalUSD += val;
+              catSubtotalTWD += val * currentRate;
+            } else {
+              catSubtotalTWD += val;
+            }
+          });
+
+          const pctOfTotal = currentTotals.net_worth_twd > 0 
+            ? ((catSubtotalTWD / currentTotals.net_worth_twd) * 100).toFixed(1)
+            : '0.0';
+
+          let subtitleHTML = escapeHtml(cat.subtitle);
+          if (cat.sections) {
+            if (cat.id === 'twd_cash') {
+              const dPct = catSubtotalTWD > 0 ? ((sumTwdDemand / catSubtotalTWD) * 100).toFixed(1) : '0.0';
+              const tPct = catSubtotalTWD > 0 ? ((sumTwdTime / catSubtotalTWD) * 100).toFixed(1) : '0.0';
+              subtitleHTML = `<span class="text-emerald-300 font-mono">🟢活存 NT$${Math.round(sumTwdDemand / 10000)}萬 (${dPct}%)</span> · <span class="text-slate-300 font-mono">🔒定存 NT$${Math.round(sumTwdTime / 10000)}萬 (${tPct}%)</span>`;
+            } else if (cat.id === 'usd_cash') {
+              const dPct = catSubtotalUSD > 0 ? ((sumUsdDemand / catSubtotalUSD) * 100).toFixed(1) : '0.0';
+              const tPct = catSubtotalUSD > 0 ? ((sumUsdTime / catSubtotalUSD) * 100).toFixed(1) : '0.0';
+              subtitleHTML = `<span class="text-cyan-300 font-mono">🟢活存 $${Math.round(sumUsdDemand).toLocaleString()} (${dPct}%)</span> · <span class="text-slate-300 font-mono">🔒定存 $${Math.round(sumUsdTime).toLocaleString()} (${tPct}%)</span>`;
+            }
+          }
+
+          card.innerHTML = `
+            <div class="border-b border-dark-700/80 pb-2.5 space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-white flex items-center space-x-1.5 truncate">
+                  <span>${cat.icon}</span>
+                  <span class="truncate">${escapeHtml(cat.title)}</span>
+                </span>
+                <span class="text-[11px] font-mono px-1.5 py-0.5 rounded bg-dark-900/80 text-slate-300 font-bold">
+                  ${pctOfTotal}%
+                </span>
+              </div>
+              <div class="flex items-baseline justify-between pt-0.5">
+                <span class="text-xs text-slate-400 text-[11px]">${subtitleHTML}</span>
+                <span class="text-sm font-extrabold font-mono ${cat.color}">
+                  ${cat.id === 'usd_cash' ? `$${Math.round(catSubtotalUSD).toLocaleString()} USD` : `NT$ ${Math.round(catSubtotalTWD).toLocaleString()}`}
+                </span>
+              </div>
+            </div>
+          `;
+
+          const bodyContainer = document.createElement('div');
+          bodyContainer.className = 'space-y-2 text-xs max-h-72 overflow-y-auto pr-1';
+          card.appendChild(bodyContainer);
+
+          if (cat.sections && Array.isArray(cat.sections)) {
+            cat.sections.forEach(sec => {
+              const secBox = document.createElement('div');
+              secBox.className = 'bg-dark-900/70 rounded-lg p-2 border border-dark-700/60 space-y-1.5';
+
+              let secSubtotalTWD = 0;
+              let secSubtotalUSD = 0;
+              sec.keys.forEach(k => {
+                const accMeta = accountsMeta.find(a => a.key === k) || { currency: 'TWD' };
+                const val = Number(currentSnap.accounts[k]) || 0;
+                if (accMeta.currency === 'USD') {
+                  secSubtotalUSD += val;
+                  secSubtotalTWD += val * currentRate;
+                } else {
+                  secSubtotalTWD += val;
+                }
+              });
+
+              const isUSD = cat.id === 'usd_cash';
+              const secSubtotalStr = isUSD 
+                ? `$${Math.round(secSubtotalUSD).toLocaleString()} (~NT$ ${Math.round(secSubtotalTWD / 10000)}萬)`
+                : `NT$ ${Math.round(secSubtotalTWD).toLocaleString()}`;
+
+              secBox.innerHTML = `
+                <div class="flex items-center justify-between text-[11px] font-bold ${sec.color} pb-1 border-b border-dark-700/50">
+                  <span class="flex items-center space-x-1">
+                    <span>${sec.icon}</span>
+                    <span>${escapeHtml(sec.title)}</span>
+                  </span>
+                  <span class="font-mono text-[10px]">${secSubtotalStr}</span>
+                </div>
+              `;
+
+              const itemsContainer = document.createElement('div');
+              itemsContainer.className = 'space-y-0.5 pt-0.5';
+              secBox.appendChild(itemsContainer);
+
+              sec.keys.forEach(k => {
+                const accMeta = accountsMeta.find(a => a.key === k) || { currency: 'TWD' };
+                const val = Number(currentSnap.accounts[k]) || 0;
+                const prevVal = prevSnap ? (Number(prevSnap.accounts[k]) || 0) : val;
+                const diff = val - prevVal;
+                const isAccUSD = accMeta.currency === 'USD';
+
+                let diffBadge = '';
+                if (prevSnap && Math.abs(diff) > 0.01) {
+                  const sign = diff > 0 ? '+' : '';
+                  const bColor = diff > 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-rose-400 bg-rose-500/10';
+                  diffBadge = `<span class="ml-1 text-[10px] font-mono px-1 py-0.2 rounded ${bColor}">${sign}${Math.round(diff).toLocaleString()}</span>`;
+                }
+
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between text-slate-400 py-0.5';
+                item.innerHTML = `
+                  <span class="truncate pr-1 ${isAccUSD ? 'text-blue-300 font-medium' : 'text-slate-300'}" title="${escapeHtml(k)}">
+                    ${escapeHtml(k)}
+                  </span>
+                  <div class="flex items-center space-x-1 font-mono whitespace-nowrap">
+                    <span class="${isAccUSD ? 'text-blue-300 font-semibold' : 'text-slate-200'}">
+                      ${isAccUSD ? '$' : 'NT$'}${Math.round(val).toLocaleString()}
+                    </span>
+                    ${diffBadge}
+                  </div>
+                `;
+                itemsContainer.appendChild(item);
+              });
+
+              bodyContainer.appendChild(secBox);
+            });
+          } else {
+            const listContainer = document.createElement('div');
+            listContainer.className = 'space-y-1';
+            cat.keys.forEach(k => {
+              const accMeta = accountsMeta.find(a => a.key === k) || { currency: 'TWD' };
+              const val = Number(currentSnap.accounts[k]) || 0;
+              const prevVal = prevSnap ? (Number(prevSnap.accounts[k]) || 0) : val;
+              const diff = val - prevVal;
+              const isAccUSD = accMeta.currency === 'USD';
+
+              let diffBadge = '';
+              if (prevSnap && Math.abs(diff) > 0.01) {
+                const sign = diff > 0 ? '+' : '';
+                const bColor = diff > 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-rose-400 bg-rose-500/10';
+                diffBadge = `<span class="ml-1 text-[10px] font-mono px-1 py-0.2 rounded ${bColor}">${sign}${Math.round(diff).toLocaleString()}</span>`;
+              }
+
+              const item = document.createElement('div');
+              item.className = 'flex items-center justify-between text-slate-400 py-1 border-b border-dark-800/40';
+              item.innerHTML = `
+                <span class="truncate pr-1 ${isAccUSD ? 'text-blue-300 font-medium' : 'text-slate-300'}" title="${escapeHtml(k)}">
+                  ${escapeHtml(k)}
+                </span>
+                <div class="flex items-center space-x-1 font-mono whitespace-nowrap">
+                  <span class="${isAccUSD ? 'text-blue-300 font-semibold' : 'text-slate-200'}">
+                    ${isAccUSD ? '$' : 'NT$'}${Math.round(val).toLocaleString()}
+                  </span>
+                  ${diffBadge}
+                </div>
+              `;
+              listContainer.appendChild(item);
+            });
+            bodyContainer.appendChild(listContainer);
+          }
+
+          funcGrid.appendChild(card);
+        });
+      }
+
+      // 7. Tab 2: Snapshots Table
+      const snapTableBody = document.getElementById('snapshots-table-body');
+      const snapCountLabel = document.getElementById('snapshots-count-label');
+      if (snapCountLabel) snapCountLabel.textContent = snapshots.length;
+
+      if (snapTableBody) {
+        snapTableBody.innerHTML = '';
+        snapshots.forEach((snap, idx) => {
+          const totals = window.calculateNetWorth(snap);
+          const pSnap = idx > 0 ? snapshots[idx - 1] : null;
+          let deltaStr = '--';
+          let deltaClass = 'text-slate-400';
+          if (pSnap) {
+            const prevNW = window.calculateNetWorth(pSnap).net_worth_twd;
+            const diff = totals.net_worth_twd - prevNW;
+            const pct = prevNW > 0 ? (diff / prevNW) * 100 : 0;
+            deltaStr = `${diff >= 0 ? '+' : ''}NT$ ${Math.round(diff).toLocaleString()} (${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%)`;
+            deltaClass = diff >= 0 ? 'text-emerald-400 font-semibold' : 'text-rose-400 font-semibold';
+          }
+
+          const sRate = Number(snap.usd_rate) || 32.0;
+          const sTwdCash = cashTwdKeys.reduce((s, k) => s + (Number(snap.accounts[k]) || 0), 0);
+          const sUsdCash = cashUsdKeys.reduce((s, k) => s + (Number(snap.accounts[k]) || 0), 0);
+          let sUsdIns = 0;
+          let sSecTWD = 0;
+          (window.state.accounts_meta || []).forEach(acc => {
+            const val = Number(snap.accounts[acc.key]) || 0;
+            if (acc.category === 'insurance') {
+              sUsdIns += (acc.currency === 'USD' ? val : val / sRate);
+            } else if (acc.category === 'tw_stock') {
+              sSecTWD += val;
+            } else if (acc.category === 'us_stock') {
+              sSecTWD += val * sRate;
+            }
+          });
+          if ((window.state.accounts_meta || []).length === 0) {
+            sSecTWD = (Number(snap.accounts['玉山證券']) || 0) + ((Number(snap.accounts['Firstrade']) || 0) * sRate);
+          }
+
+          const isActive = idx === window.activeSnapshotIndex;
+          const tr = document.createElement('tr');
+          tr.className = `group hover:bg-dark-750/70 cursor-pointer transition ${isActive ? 'active-snap-row' : ''}`;
+          tr.onclick = (e) => {
+            if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) window.selectSnapshot(idx);
+          };
+
+          const actionButtonsHTML = isActive
+            ? `<div class="flex items-center justify-center space-x-1.5 opacity-100 transition-opacity">
+                <button type="button" class="text-[11px] bg-dark-700 hover:bg-dark-600 text-slate-200 font-sans px-2.5 py-1 rounded border border-dark-600 font-semibold transition cursor-pointer flex items-center space-x-1" onclick="window.openEditSnapshotModal(${idx})">
+                  <span>✏️</span> <span>編輯</span>
+                </button>
+                <button type="button" class="text-[11px] bg-rose-950/60 hover:bg-rose-800 text-rose-300 font-sans px-2.5 py-1 rounded border border-rose-700/50 font-semibold transition cursor-pointer flex items-center space-x-1" onclick="window.confirmDeleteSnapshot(${idx})">
+                  <span>🗑️</span> <span>刪除</span>
+                </button>
+              </div>`
+            : `<div class="flex items-center justify-center space-x-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button type="button" class="text-[11px] bg-emerald-600 hover:bg-emerald-500 text-white font-sans px-2 py-1 rounded font-semibold transition cursor-pointer" onclick="window.selectSnapshot(${idx})">
+                  檢視
+                </button>
+                <button type="button" class="text-[11px] bg-dark-700 hover:bg-dark-600 text-slate-200 font-sans px-2 py-1 rounded border border-dark-600 font-semibold transition cursor-pointer" onclick="window.openEditSnapshotModal(${idx})">
+                  編輯
+                </button>
+                <button type="button" class="text-[11px] bg-rose-950/60 hover:bg-rose-800 text-rose-300 font-sans px-2 py-1 rounded border border-rose-700/50 font-semibold transition cursor-pointer" onclick="window.confirmDeleteSnapshot(${idx})">
+                  刪除
+                </button>
+              </div>`;
+
+          tr.innerHTML = `
+            <td class="py-3 px-4">
+              ${isActive ? '<span class="bg-emerald-500/20 text-emerald-300 font-sans text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-500/40">檢視中</span>' : '<span class="text-slate-500 font-sans text-[10px]">—</span>'}
+            </td>
+            <td class="py-3 px-4 font-bold text-white">${escapeHtml(snap.date)}</td>
+            <td class="py-3 px-4 text-right text-emerald-400 font-bold">${sRate.toFixed(2)}</td>
+            <td class="py-3 px-4 text-right text-cyan-300">NT$ ${Math.round(sTwdCash).toLocaleString()}</td>
+            <td class="py-3 px-4 text-right text-blue-300">$ ${Math.round(sUsdCash).toLocaleString()}</td>
+            <td class="py-3 px-4 text-right text-purple-300">$ ${Math.round(sUsdIns).toLocaleString()}</td>
+            <td class="py-3 px-4 text-right text-emerald-300">NT$ ${Math.round(sSecTWD).toLocaleString()}</td>
+            <td class="py-3 px-4 text-right font-bold text-white text-sm">NT$ ${Math.round(totals.net_worth_twd).toLocaleString()}</td>
+            <td class="py-3 px-4 text-right ${deltaClass}">${deltaStr}</td>
+            <td class="py-3 px-4 text-slate-400 font-sans truncate max-w-xs" title="${escapeHtml(snap.note)}">${escapeHtml(snap.note || '')}</td>
+            <td class="py-3 px-4 text-center">
+              ${actionButtonsHTML}
+            </td>
+          `;
+          snapTableBody.appendChild(tr);
+        });
+      }
+
+      // 8. Tab 2: Full Historical Matrix Table (Bank-Sorted Grid)
+      const matrixTable = document.getElementById('all-snapshots-matrix-table');
+      if (matrixTable) {
+        matrixTable.innerHTML = '';
+        
+        let theadHTML = `<thead class="bg-dark-900 sticky top-0 border-b border-dark-700 font-mono text-slate-400">
+          <tr>
+            <th class="py-2.5 px-3 border-r border-dark-700">機構 / 帳戶名稱</th>
+            <th class="py-2.5 px-3 border-r border-dark-700 text-center">幣別</th>`;
+        snapshots.forEach((s, sIdx) => {
+          theadHTML += `<th class="py-2.5 px-3 text-right border-r border-dark-700 ${sIdx === window.activeSnapshotIndex ? 'text-emerald-400 bg-emerald-500/10' : ''}">
+            <div class="flex items-center justify-end space-x-1">
+              <span>${escapeHtml(s.date)}</span>
+              <button onclick="window.openEditSnapshotModal(${sIdx})" class="text-[10px] text-slate-500 hover:text-emerald-300 ml-1" title="編輯此期">✏️</button>
+            </div>
+          </th>`;
+        });
+        theadHTML += `</tr></thead><tbody class="divide-y divide-dark-700/60 font-mono">`;
+
+        let tbodyHTML = '';
+        window.BANK_INSTITUTIONS.forEach(g => {
+          tbodyHTML += `<tr class="bg-dark-800/80 font-bold border-t border-dark-700">
+            <td class="py-2 px-3 text-xs text-slate-200 font-sans flex items-center space-x-1.5" colspan="${2 + snapshots.length}">
+              <span>${g.icon}</span> <span>${escapeHtml(g.institution)}</span>
+            </td>
+          </tr>`;
+
+          g.keys.forEach(k => {
+            const accMeta = accountsMeta.find(a => a.key === k) || { currency: 'TWD' };
+            const isUSD = accMeta.currency === 'USD';
+
+            tbodyHTML += `<tr class="hover:bg-dark-750/50">
+              <td class="py-1.5 px-3 pl-6 border-r border-dark-700 font-medium ${isUSD ? 'text-blue-300' : 'text-slate-300'}">${escapeHtml(k)}</td>
+              <td class="py-1.5 px-3 border-r border-dark-700 text-center ${isUSD ? 'text-blue-400' : 'text-slate-400'}">${escapeHtml(accMeta.currency)}</td>`;
+            
+            snapshots.forEach((s, sIdx) => {
+              const v = Number(s.accounts[k]) || 0;
+              const isSel = sIdx === window.activeSnapshotIndex;
+              tbodyHTML += `<td class="py-1.5 px-3 border-r border-dark-700 text-right ${isSel ? 'text-white font-semibold bg-emerald-500/5' : 'text-slate-300'}">${isUSD ? '$' : ''}${Math.round(v).toLocaleString()}</td>`;
+            });
+            tbodyHTML += `</tr>`;
+          });
+        });
+
+        tbodyHTML += `<tr class="bg-dark-900 font-bold border-t-2 border-dark-600">
+          <td class="py-3 px-3 border-r border-dark-700 text-emerald-400 font-sans" colspan="2">總資產 (NTD 折合)</td>`;
+        snapshots.forEach(s => {
+          const tot = window.calculateNetWorth(s).net_worth_twd;
+          tbodyHTML += `<td class="py-3 px-3 border-r border-dark-700 text-right text-emerald-400 text-sm">NT$ ${Math.round(tot).toLocaleString()}</td>`;
+        });
+        tbodyHTML += `</tr></tbody>`;
+
+        matrixTable.innerHTML = theadHTML + tbodyHTML;
+      }
+
+      // 9. Tab 3: Taiwan Stocks Table
+      const twStocksBody = document.getElementById('tw-stocks-table-body');
+      const twStocks = state.tw_stocks || [];
+      const twCountElem = document.getElementById('tw-stocks-count-label');
+      if (twCountElem) twCountElem.textContent = twStocks.length;
+
+      let twMVTotal = 0;
+      let twCostTotal = 0;
+      if (twStocksBody) {
+        twStocksBody.innerHTML = '';
+        twStocks.forEach((st, idx) => {
+          const shares = Number(st.shares) || 0;
+          const costTotal = Number(st.cost_total) || (shares * (Number(st.avg_cost) || 0));
+          const price = Number(st.price) || 0;
+          const mv = shares * price;
+          const pl = mv - costTotal;
+          const roi = costTotal > 0 ? (pl / costTotal) * 100 : 0;
+          twMVTotal += mv;
+          twCostTotal += costTotal;
+
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-dark-750/50';
+          tr.innerHTML = `
+            <td class="py-2.5 px-4 font-bold text-white">${escapeHtml(st.ticker)}</td>
+            <td class="py-2.5 px-4 text-slate-200 font-sans">${escapeHtml(st.name)}</td>
+            <td class="py-2.5 px-4 text-right">${shares.toLocaleString()}</td>
+            <td class="py-2.5 px-4 text-right">${(costTotal / (shares || 1)).toFixed(2)}</td>
+            <td class="py-2.5 px-4 text-right">NT$ ${Math.round(costTotal).toLocaleString()}</td>
+            <td class="py-2.5 px-4 text-right text-emerald-400 font-bold">${price.toFixed(2)}</td>
+            <td class="py-2.5 px-4 text-right text-white font-bold">NT$ ${Math.round(mv).toLocaleString()}</td>
+            <td class="py-2.5 px-4 text-right ${pl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${pl >= 0 ? '+' : ''}NT$ ${Math.round(pl).toLocaleString()}</td>
+            <td class="py-2.5 px-4 text-right ${roi >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${roi >= 0 ? '+' : ''}${roi.toFixed(2)}%</td>
+            <td class="py-2.5 px-4 text-center">
+              <div class="flex items-center justify-center space-x-1.5">
+                <button type="button" class="text-xs bg-dark-700 hover:bg-dark-600 text-slate-300 px-2 py-0.5 rounded border border-dark-600 font-sans transition cursor-pointer" onclick="window.openStockModal('TW', 'edit', ${idx})">編輯</button>
+                <button type="button" class="text-xs bg-rose-900/40 hover:bg-rose-800 text-rose-300 px-2 py-0.5 rounded border border-rose-700/50 font-sans transition cursor-pointer" onclick="window.deleteStockPosition('TW', ${idx})">刪除</button>
+              </div>
+            </td>
+          `;
+          twStocksBody.appendChild(tr);
+        });
+      }
+
+      const kpiTwTotal = document.getElementById('stocks-kpi-tw-total');
+      const kpiTwPL = document.getElementById('stocks-kpi-tw-pl');
+      if (kpiTwTotal) kpiTwTotal.textContent = `NT$ ${Math.round(twMVTotal).toLocaleString()}`;
+      if (kpiTwPL) {
+        const totalPL = twMVTotal - twCostTotal;
+        const totalROI = twCostTotal > 0 ? (totalPL / twCostTotal) * 100 : 0;
+        kpiTwPL.textContent = `${totalPL >= 0 ? '+' : ''}NT$ ${Math.round(totalPL).toLocaleString()} (${totalROI >= 0 ? '+' : ''}${totalROI.toFixed(2)}%)`;
+        kpiTwPL.className = totalPL >= 0 ? 'font-mono text-emerald-400' : 'font-mono text-rose-400';
+      }
+
+      // 10. Tab 3: US Stocks Table
+      const usStocksBody = document.getElementById('us-stocks-table-body');
+      const usStocks = state.us_stocks || [];
+      let usMVTotal = 0;
+      if (usStocksBody) {
+        usStocksBody.innerHTML = '';
+        usStocks.forEach((st, idx) => {
+          const mv = Number(st.market_value) || ((Number(st.shares) || 0) * (Number(st.price) || 0));
+          usMVTotal += mv;
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-dark-750/50';
+          tr.innerHTML = `
+            <td class="py-2.5 px-4 text-slate-300 font-sans">${escapeHtml(st.account)}</td>
+            <td class="py-2.5 px-4 font-bold text-white">${escapeHtml(st.ticker || '—')}</td>
+            <td class="py-2.5 px-4 text-right">${st.shares ? Number(st.shares).toLocaleString() : '—'}</td>
+            <td class="py-2.5 px-4 text-right text-emerald-400">${st.price ? '$' + Number(st.price).toFixed(2) : '—'}</td>
+            <td class="py-2.5 px-4 text-right font-bold text-white">$ ${Number(mv).toFixed(2)}</td>
+            <td class="py-2.5 px-4 text-right text-slate-300">NT$ ${Math.round(mv * currentRate).toLocaleString()}</td>
+            <td class="py-2.5 px-4 text-slate-400 font-sans truncate max-w-xs">${escapeHtml(st.note || '')}</td>
+            <td class="py-2.5 px-4 text-center">
+              <div class="flex items-center justify-center space-x-1.5">
+                <button type="button" class="text-xs bg-dark-700 hover:bg-dark-600 text-slate-300 px-2 py-0.5 rounded border border-dark-600 font-sans transition cursor-pointer" onclick="window.openStockModal('US', 'edit', ${idx})">編輯</button>
+                <button type="button" class="text-xs bg-rose-900/40 hover:bg-rose-800 text-rose-300 px-2 py-0.5 rounded border border-rose-700/50 font-sans transition cursor-pointer" onclick="window.deleteStockPosition('US', ${idx})">刪除</button>
+              </div>
+            </td>
+          `;
+          usStocksBody.appendChild(tr);
+        });
+      }
+
+      const kpiUsTotal = document.getElementById('stocks-kpi-us-total');
+      const kpiUsTwd = document.getElementById('stocks-kpi-us-twd');
+      const kpiEqWeight = document.getElementById('stocks-kpi-equity-weight');
+      if (kpiUsTotal) kpiUsTotal.textContent = `$ ${Math.round(usMVTotal).toLocaleString()} USD`;
+      if (kpiUsTwd) kpiUsTwd.textContent = `NT$ ${Math.round(usMVTotal * currentRate).toLocaleString()}`;
+      if (kpiEqWeight && currentTotals.net_worth_twd > 0) {
+        const totalEq = twMVTotal + (usMVTotal * currentRate);
+        kpiEqWeight.textContent = `${((totalEq / currentTotals.net_worth_twd) * 100).toFixed(1)}%`;
+      }
+
+      // 11. Tab 4: Insurance Table
+      const insBody = document.getElementById('insurance-table-body');
+      const insuranceList = state.insurance || [];
+      if (insBody) {
+        insBody.innerHTML = '';
+        insuranceList.forEach((p) => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-dark-750/50';
+          tr.innerHTML = `
+            <td class="py-3 px-4 font-mono font-bold">${escapeHtml(p.id)}</td>
+            <td class="py-3 px-4 font-medium text-slate-200">${escapeHtml(p.company || '—')}</td>
+            <td class="py-3 px-4 text-slate-300">${escapeHtml(p.type || '—')}</td>
+            <td class="py-3 px-4 font-medium text-white">${escapeHtml(p.name || '—')}</td>
+            <td class="py-3 px-4 font-mono text-slate-400">${escapeHtml(p.policy_no || '—')}</td>
+            <td class="py-3 px-4 text-slate-300">${escapeHtml(p.insured || '—')}</td>
+            <td class="py-3 px-4 text-slate-400 font-mono">${escapeHtml(p.start || '')} ~ ${escapeHtml(p.end || '')}</td>
+            <td class="py-3 px-4 text-right font-mono">${p.premium_year ? Number(p.premium_year).toLocaleString() : '—'}</td>
+            <td class="py-3 px-4 text-right font-mono">${p.premium_cumulative ? Number(p.premium_cumulative).toLocaleString() : (p.coverage ? Number(p.coverage).toLocaleString() : '—')}</td>
+            <td class="py-3 px-4 text-slate-400 truncate max-w-xs" title="${escapeHtml(p.note)}">${escapeHtml(p.note || '')}</td>
+          `;
+          insBody.appendChild(tr);
+        });
+      }
+
+      // 12. Tab 6: Raw JSON Inspector
+      const jsonInspector = document.getElementById('raw-json-inspector');
+      if (jsonInspector) {
+        jsonInspector.value = JSON.stringify(state, null, 2);
+      }
+
+      // 13. Render Charts
+      window.renderCharts();
+    };
+
+    // Render Charts
+    window.renderCharts = function () {
+      const state = window.state;
+      const snapshots = state.snapshots || [];
+      const currentSnap = snapshots[window.activeSnapshotIndex] || snapshots[snapshots.length - 1];
+      const rate = currentSnap ? Number(currentSnap.usd_rate) : 32.0;
+
+      // Chart 1: Net Worth History Line Chart
+      const historyCanvas = document.getElementById('chart-net-worth-history');
+      if (historyCanvas) {
+        if (window.charts.history) window.charts.history.destroy();
+        const historyLabels = snapshots.map(s => s.date);
+        const historyData = snapshots.map(s => Math.round(window.calculateNetWorth(s).net_worth_twd));
+        const pointColors = snapshots.map((s, idx) => idx === window.activeSnapshotIndex ? '#10b981' : '#64748b');
+        const pointRadii = snapshots.map((s, idx) => idx === window.activeSnapshotIndex ? 7 : 4);
+
+        window.charts.history = new Chart(historyCanvas, {
+          type: 'line',
+          data: {
+            labels: historyLabels,
+            datasets: [{
+              label: '總淨值 (NTD)',
+              data: historyData,
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.08)',
+              borderWidth: 2.5,
+              fill: true,
+              tension: 0.25,
+              pointBackgroundColor: pointColors,
+              pointBorderColor: '#070a11',
+              pointBorderWidth: 2,
+              pointRadius: pointRadii
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) => ` 淨值: NT$ ${ctx.raw.toLocaleString()}`
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: { color: '#1f2937' },
+                ticks: { color: '#94a3b8', font: { family: 'monospace', size: 11 } }
+              },
+              y: {
+                grid: { color: '#1f2937' },
+                ticks: {
+                  color: '#94a3b8',
+                  font: { family: 'monospace', size: 11 },
+                  callback: (v) => `NT$ ${(v / 1e6).toFixed(1)}M`
+                }
+              }
+            }
+          }
+        });
+      }
+
+      // Chart 2: Asset Allocation Doughnut Chart (Functional Groups)
+      const allocCanvas = document.getElementById('chart-asset-allocation');
+      const chartSnapLabel = document.getElementById('chart-snap-label');
+      if (chartSnapLabel && currentSnap) chartSnapLabel.textContent = `期數: ${currentSnap.date}`;
+
+      if (allocCanvas && currentSnap) {
+        if (window.charts.alloc) window.charts.alloc.destroy();
+        const accountsMeta = state.accounts_meta || [];
+        
+        let twdCashTotal = 0;
+        let usdCashTotal = 0;
+        let investTotal = 0;
+        let insTotal = 0;
+
+        window.FUNCTIONAL_CATEGORIES[0].keys.forEach(k => twdCashTotal += Number(currentSnap.accounts[k]) || 0);
+        window.FUNCTIONAL_CATEGORIES[1].keys.forEach(k => usdCashTotal += (Number(currentSnap.accounts[k]) || 0) * rate);
+        window.FUNCTIONAL_CATEGORIES[2].keys.forEach(k => {
+          const a = accountsMeta.find(x => x.key === k);
+          const v = Number(currentSnap.accounts[k]) || 0;
+          investTotal += (a && a.currency === 'USD') ? v * rate : v;
+        });
+        window.FUNCTIONAL_CATEGORIES[3].keys.forEach(k => insTotal += (Number(currentSnap.accounts[k]) || 0) * rate);
+
+        window.charts.alloc = new Chart(allocCanvas, {
+          type: 'doughnut',
+          data: {
+            labels: ['🇹🇼 台幣現金與定存', '🇺🇸 美元存款部位', '📈 投資與證券帳戶', '🛡️ 美元儲蓄險保單'],
+            datasets: [{
+              data: [
+                Math.round(twdCashTotal),
+                Math.round(usdCashTotal),
+                Math.round(investTotal),
+                Math.round(insTotal)
+              ],
+              backgroundColor: ['#10b981', '#06b6d4', '#3b82f6', '#a855f7'],
+              borderColor: '#111827',
+              borderWidth: 3
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { color: '#cbd5e1', font: { size: 11 }, padding: 10 }
+              },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) => {
+                    const val = ctx.raw;
+                    const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                    const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
+                    return ` ${ctx.label}: NT$ ${val.toLocaleString()} (${pct}%)`;
+                  }
+                }
+              }
+            },
+            cutout: '62%'
+          }
+        });
+      }
+    };
+
+    // ==========================================
+    // AI ADVISOR & STRATEGY ENGINE
+    // ==========================================
+    window.openAIModal = function () {
+      document.getElementById('modal-ai-advisor').classList.remove('hidden');
+      
+      const envKey = (window.ENV && window.ENV.GEMINI_API_KEY) ? window.ENV.GEMINI_API_KEY.trim() : '';
+      const savedKey = localStorage.getItem('ai_api_key') || '';
+      const effectiveKey = envKey || savedKey;
+
+      const keyInput = document.getElementById('gemini-api-key-input');
+      const modeLabel = document.getElementById('ai-engine-mode-label');
+
+      if (keyInput) keyInput.value = effectiveKey;
+
+      if (envKey) {
+        if (modeLabel) modeLabel.innerHTML = '<span class="text-purple-400 font-semibold">⚡ 已由 env.js 自動載入 Gemini Key</span>';
+      } else if (savedKey) {
+        if (modeLabel) modeLabel.innerHTML = '<span class="text-blue-400 font-semibold">⚡ 已載入瀏覽器已存 Key</span>';
+      } else {
+        if (modeLabel) modeLabel.innerHTML = '<span class="text-emerald-400 font-semibold">內建智慧決策引擎 (免 Key 秒開)</span>';
+      }
+
+      window.generateAIAnalysis(false);
+    };
+
+    window.closeAIModal = function () {
+      document.getElementById('modal-ai-advisor').classList.add('hidden');
+    };
+
+    window.generateAIAnalysis = async function (forceApiCall = false) {
+      const outputContainer = document.getElementById('ai-analysis-output');
+      const modeLabel = document.getElementById('ai-engine-mode-label');
+      const apiKeyInput = document.getElementById('gemini-api-key-input');
+
+      const envKey = (window.ENV && window.ENV.GEMINI_API_KEY) ? window.ENV.GEMINI_API_KEY.trim() : '';
+      let inputKey = apiKeyInput ? apiKeyInput.value.trim() : '';
+      let apiKey = inputKey || envKey || localStorage.getItem('ai_api_key') || '';
+
+      if (inputKey) {
+        localStorage.setItem('ai_api_key', inputKey);
+      }
+
+      const state = window.state;
+      const snapshots = state.snapshots || [];
+      const curSnap = snapshots[window.activeSnapshotIndex];
+      const prevSnap = window.activeSnapshotIndex > 0 ? snapshots[window.activeSnapshotIndex - 1] : null;
+
+      if (!curSnap) {
+        outputContainer.innerHTML = `<div class="text-rose-400">目前尚無快照數據可供分析。</div>`;
+        return;
+      }
+
+      const curTotals = window.calculateNetWorth(curSnap);
+      const prevTotals = prevSnap ? window.calculateNetWorth(prevSnap) : null;
+      const rate = Number(curSnap.usd_rate) || 32.0;
+
+      const accountsMeta = state.accounts_meta || [];
+      const cashTwdKeys = accountsMeta.filter(a => a.currency === 'TWD' && a.category === 'cash').map(a => a.key);
+      const cashUsdKeys = accountsMeta.filter(a => a.currency === 'USD' && a.category === 'cash').map(a => a.key);
+      const sumCashTWD = cashTwdKeys.reduce((s, k) => s + (Number(curSnap.accounts[k]) || 0), 0);
+      const sumCashUSD = cashUsdKeys.reduce((s, k) => s + (Number(curSnap.accounts[k]) || 0), 0);
+      const totalCashTWD = sumCashTWD + (sumCashUSD * rate);
+      const emergencyReserve = 2400000;
+      const deployableCash = Math.max(0, totalCashTWD - emergencyReserve);
+
+      const twStockKeys = accountsMeta.filter(a => a.category === 'tw_stock').map(a => a.key);
+      const usStockKeys = accountsMeta.filter(a => a.category === 'us_stock').map(a => a.key);
+      const twStockVal = twStockKeys.reduce((s, k) => s + (Number(curSnap.accounts[k]) || 0), 0);
+      const usStockUSD = usStockKeys.reduce((s, k) => s + (Number(curSnap.accounts[k]) || 0), 0);
+      const totalEquityTWD = twStockVal + (usStockUSD * rate);
+      const maxEquityCapacity = curTotals.net_worth_twd * 0.50;
+      const equityHeadroom = maxEquityCapacity - totalEquityTWD;
+      const equityRatio = ((totalEquityTWD / curTotals.net_worth_twd) * 100).toFixed(1);
+
+      const accountDeltas = [];
+      if (prevSnap) {
+        accountsMeta.forEach(a => {
+          const c = Number(curSnap.accounts[a.key]) || 0;
+          const p = Number(prevSnap.accounts[a.key]) || 0;
+          if (Math.abs(c - p) > 0.01) {
+            accountDeltas.push({ key: a.key, curr: a.currency, cur: c, prev: p, diff: c - p });
+          }
+        });
+      }
+
+      const promptText = `你是一位精通跨國財務規劃、美國非居民外國人 (NRA) 稅務、以及指數化投資 (Bogleheads) 的專業資產顧問。
+請針對以下跨國投資者（持台美雙幣別帳戶、指數化被動投資）的最新財務快照數據與 IPS 風險約束，產出專業、清晰、具體且溫暖的 Markdown 診斷報告：
+
+【核心財務約束與安全防線】
+- 美國非居民外國人 (NRA) 稅務防線：嚴格遵守 IRC §871(a)(2)，避免賣出獲利美股觸發 30% 稅負，堅持以閒置現金投入。
+- 最大回撤承受度 25% (對應總股票上限 50%，目前安全加碼額度約 NT$ ${Math.round(equityHeadroom).toLocaleString()})。
+- 緊急生活金儲備規範：設定儲備 NT$ ${Math.round(emergencyReserve).toLocaleString()}。
+- 美國遺產稅防禦門檻：非美籍投資人持有美國註冊資產免稅額僅 $60,000 USD (目前美股部位約 $${Math.round(usStockUSD).toLocaleString()} USD)。
+
+【本期財務數據 (${curSnap.date}) vs 上一期 (${prevSnap ? prevSnap.date : '基期'})】
+- 目前總淨值: NT$ ${Math.round(curTotals.net_worth_twd).toLocaleString()} ($${Math.round(curTotals.net_worth_usd).toLocaleString()} USD)
+- 期間淨值變動: ${prevTotals ? (curTotals.net_worth_twd - prevTotals.net_worth_twd >= 0 ? '+' : '') + 'NT$ ' + Math.round(curTotals.net_worth_twd - prevTotals.net_worth_twd).toLocaleString() : '基期'}
+- 總流動現金: NT$ ${Math.round(totalCashTWD).toLocaleString()} (扣除應急金後可靈活調度閒置資金: NT$ ${Math.round(deployableCash).toLocaleString()})
+- 現有股票部位: NT$ ${Math.round(totalEquityTWD).toLocaleString()} (佔比 ${equityRatio}%)
+- 帳戶異動明細: ${JSON.stringify(accountDeltas)}
+
+請在報告中涵蓋：
+1. 📊 **本期資產變動與資金流向總結**（簡評資產結構與雙幣別流動性健康度）
+2. 🛡️ **安全防禦線與風險審查**（緊急備用金、回撤預算、遺產稅與 30% 資本利得稅提醒）
+3. 🎯 **具體資金活化策略與行動清單 (Action Plan)**（指導如何利用閒置資金分批佈局全球大盤指數型標的，給予 3 點本季執行方針）。`;
+
+      // If user requested API Call and provided API key
+      if (forceApiCall && apiKey) {
+        modeLabel.textContent = 'Google Gemini 即時深度生成中...';
+        outputContainer.innerHTML = `<div class="flex items-center justify-center p-8 space-x-2 text-purple-300 animate-pulse">
+          <span>🧠</span> <span>Gemini 正在分析您的跨國財務數據，請稍候...</span>
+        </div>`;
+
+        try {
+          const fallbackModels = [
+            'gemini-3.7-flash',
+            'gemini-3.6-flash',
+            'gemini-3.5-flash',
+            'gemini-2.5-flash',
+            'gemini-3.5-flash-lite'
+          ];
+
+          let successMD = null;
+          let activeModel = '';
+          let lastError = null;
+
+          for (const m of fallbackModels) {
+            try {
+              modeLabel.textContent = `嘗試連線中 (${m})...`;
+              const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  contents: [{ role: 'user', parts: [{ text: promptText }] }]
+                })
+              });
+
+              if (res.ok) {
+                const data = await res.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) {
+                  successMD = text;
+                  activeModel = m;
+                  break;
+                }
+              } else {
+                const errJson = await res.json().catch(() => ({}));
+                lastError = `Google API (${res.status} on ${m}): ${errJson.error?.message || res.statusText}`;
+              }
+            } catch (e) {
+              lastError = `${m}: ${e.message}`;
+            }
+          }
+
+          if (!successMD) throw new Error(lastError || '5 組備用模型皆連線失敗，請稍候重試');
+
+          modeLabel.textContent = `Google ${activeModel} 生成成功`;
+          const parsedHTML = (typeof marked !== 'undefined') ? marked.parse(successMD) : escapeHtml(successMD);
+          outputContainer.innerHTML = `<div class="ai-markdown text-xs leading-relaxed text-slate-200">${parsedHTML}</div>`;
+          return;
+        } catch (err) {
+          console.warn('Gemini API Error:', err);
+          outputContainer.innerHTML = `
+            <div class="bg-rose-950/50 border border-rose-500/60 p-4 rounded-xl text-rose-200 space-y-2 mb-4">
+              <div class="font-bold flex items-center space-x-1.5 text-sm">
+                <span>⚠️</span> <span>Gemini API 連線診斷結果：</span>
+              </div>
+              <div class="font-mono text-xs bg-dark-900/90 text-rose-300 p-2.5 rounded border border-rose-800/40 select-all">
+                ${escapeHtml(err.message)}
+              </div>
+              <p class="text-xs text-slate-300">💡 提示：若直接開檔受瀏覽器 CORS 限制，您可直接在對話中或由內建引擎查看完整報告。</p>
+            </div>
+          `;
+          outputContainer.innerHTML += window.buildRuleEngineReport(curSnap, prevSnap, curTotals, prevTotals, totalCashTWD, deployableCash, totalEquityTWD, equityRatio, equityHeadroom, accountDeltas);
+          return;
+        }
+      }
+
+      // Default: Built-in Intelligent Rule Engine Analysis (0ms Instant & High Quality)
+      if (!envKey && !inputKey) {
+        modeLabel.textContent = '內建智慧決策分析引擎 (0秒秒開)';
+      }
+      outputContainer.innerHTML = window.buildRuleEngineReport(curSnap, prevSnap, curTotals, prevTotals, totalCashTWD, deployableCash, totalEquityTWD, equityRatio, equityHeadroom, accountDeltas);
+    };
+
+    window.buildRuleEngineReport = function (curSnap, prevSnap, curTotals, prevTotals, totalCashTWD, deployableCash, totalEquityTWD, equityRatio, equityHeadroom, accountDeltas) {
+      const nwDelta = prevTotals ? (curTotals.net_worth_twd - prevTotals.net_worth_twd) : 0;
+      const nwDeltaSign = nwDelta >= 0 ? '+' : '';
+      const nwDeltaPct = prevTotals && prevTotals.net_worth_twd > 0 ? ((nwDelta / prevTotals.net_worth_twd) * 100).toFixed(2) : '0.00';
+
+      return `
+        <div class="space-y-4 font-sans text-slate-200">
+          
+          <!-- Section 1: Summary Card -->
+          <div class="card-panel p-4 border-l-4 border-l-purple-500 bg-purple-950/20 space-y-2">
+            <h4 class="text-sm font-bold text-purple-300 flex items-center space-x-2">
+              <span>📊</span> <span>一、本期資產消長與資金流向總結 (${curSnap.date})</span>
+            </h4>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              • <strong>總淨值規模</strong>：目前總資產折合 <strong>NT$ ${Math.round(curTotals.net_worth_twd).toLocaleString()}</strong> ($${Math.round(curTotals.net_worth_usd).toLocaleString()} USD)。<br>
+              • <strong>跨期變動比較</strong>：相較於上一期 (${prevSnap ? prevSnap.date : '基期'})，總淨值變動為 
+              <strong class="${nwDelta >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${nwDeltaSign}NT$ ${Math.round(nwDelta).toLocaleString()} (${nwDeltaSign}${nwDeltaPct}%)</strong>。<br>
+              • <strong>流動性結構</strong>：高流動性總現金達 NT$ ${Math.round(totalCashTWD).toLocaleString()}，可靈活調度資金達 <strong>NT$ ${Math.round(deployableCash).toLocaleString()}</strong>。
+            </p>
+          </div>
+
+          <!-- Section 2: Defense Line & Risk Capacity -->
+          <div class="card-panel p-4 border-l-4 border-l-emerald-500 bg-emerald-950/20 space-y-2">
+            <h4 class="text-sm font-bold text-emerald-300 flex items-center space-x-2">
+              <span>🛡️</span> <span>二、財務安全防禦線與風險預算審查</span>
+            </h4>
+            <ul class="text-xs text-slate-300 space-y-1.5 list-disc list-inside leading-relaxed">
+              <li><strong>生活緊急預備金</strong>：建議維持 6 至 24 個月生活常規開支儲備，確保基本生活流動性安全無虞。</li>
+              <li><strong>可靈活運用資金</strong>：扣除緊急儲備後，目前估計有 <strong>NT$ ${Math.round(deployableCash).toLocaleString()}</strong> 可供中長線策略調度。</li>
+              <li><strong>風險承受額度上限</strong>：目前股票部位（台股 + 美股）約佔 <strong>${equityRatio}%</strong>（NT$ ${Math.round(totalEquityTWD).toLocaleString()}），距離 50% 風險上限尚有 <strong>NT$ ${Math.round(equityHeadroom).toLocaleString()}</strong> 的安全加碼空間。</li>
+            </ul>
+          </div>
+
+          <!-- Section 3: Cross-Border Tax & Strategy Roadmap -->
+          <div class="card-panel p-4 border-l-4 border-l-blue-500 bg-blue-950/20 space-y-2">
+            <h4 class="text-sm font-bold text-blue-300 flex items-center space-x-2">
+              <span>🎯</span> <span>三、建議的資金活化具體行動方針 (Action Roadmap)</span>
+            </h4>
+            <div class="text-xs text-slate-300 space-y-2 leading-relaxed">
+              <div class="bg-dark-900/80 p-3 rounded border border-dark-700 space-y-1.5">
+                <div class="font-bold text-white flex items-center space-x-1">
+                  <span>1.</span> <span>活化外幣與美金閒置流動性：</span>
+                </div>
+                <p class="text-slate-300 pl-4">檢視外幣活儲與活期帳戶中的閒置資金，若高於短期週轉需求，可評估分批轉入正規券商，配置全球分散型指數 ETF 以抗通膨。</p>
+              </div>
+
+              <div class="bg-dark-900/80 p-3 rounded border border-dark-700 space-y-1.5">
+                <div class="font-bold text-white flex items-center space-x-1">
+                  <span>2.</span> <span>建立定期定額核心資產：</span>
+                </div>
+                <p class="text-slate-300 pl-4">將台幣活存或到期資金設定定期定額投入大型權值或大盤指數 ETF（如 0050 / 006208），平滑進場成本並獲取長期經濟成長複利。</p>
+              </div>
+
+              <div class="bg-dark-900/80 p-3 rounded border border-dark-700 space-y-1.5">
+                <div class="font-bold text-white flex items-center space-x-1">
+                  <span>3.</span> <span>重視跨國稅務與資產保護：</span>
+                </div>
+                <p class="text-slate-300 pl-4">非美國稅務居民（NRA）持有美股需特別留意 6 萬美元遺產稅免稅門檻與 30% 股息預扣稅，必要時可評估愛爾蘭註冊 UCITS ETF 以進行稅務最適化。</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      `;
+    };
+
+    // ==========================================
+    // SNAPSHOT DELETION MODAL HANDLERS
+    // ==========================================
+    window.confirmDeleteSnapshot = function (index) {
+      const snapshots = window.state.snapshots || [];
+      if (snapshots.length <= 1) {
+        showToast('⚠️ 系統至少需保留 1 筆基準快照，無法刪除最後一筆！', 'error');
+        return;
+      }
+      if (index < 0 || index >= snapshots.length) return;
+
+      const target = snapshots[index];
+      const totals = window.calculateNetWorth(target);
+
+      document.getElementById('delete-target-index').value = index;
+      document.getElementById('del-modal-date').textContent = target.date;
+      document.getElementById('del-modal-total').textContent = `NT$ ${Math.round(totals.net_worth_twd).toLocaleString()} ($${Math.round(totals.net_worth_usd).toLocaleString()} USD)`;
+      document.getElementById('del-modal-note').textContent = target.note || '(無備註)';
+
+      document.getElementById('modal-delete-snapshot-confirm').classList.remove('hidden');
+    };
+
+    window.closeDeleteSnapshotModal = function () {
+      document.getElementById('modal-delete-snapshot-confirm').classList.add('hidden');
+    };
+
+    window.executeDeleteSnapshot = function () {
+      const index = Number(document.getElementById('delete-target-index').value);
+      const snapshots = window.state.snapshots || [];
+      if (snapshots.length <= 1) {
+        showToast('⚠️ 系統至少需保留 1 筆基準快照！', 'error');
+        window.closeDeleteSnapshotModal();
+        return;
+      }
+
+      if (index >= 0 && index < snapshots.length) {
+        const deleted = snapshots.splice(index, 1);
+        
+        // Adjust active snapshot index smoothly
+        if (window.activeSnapshotIndex >= snapshots.length) {
+          window.activeSnapshotIndex = Math.max(0, snapshots.length - 1);
+        } else if (window.activeSnapshotIndex === index) {
+          window.activeSnapshotIndex = Math.max(0, snapshots.length - 1);
+        }
+
+        window.closeDeleteSnapshotModal();
+        window.renderAll();
+        showToast(`已成功刪除 ${deleted[0]?.date} 的快照記錄！`, 'info');
+      }
+    };
+
+    // Modal: Snapshot Operations (Bank-Centric Data Entry)
+    window.modalEditingIndex = null;
+
+    window.closeSnapshotModal = function () {
+      document.getElementById('modal-snapshot-editor').classList.add('hidden');
+    };
+
+    window.openAddSnapshotModal = function () {
+      window.modalEditingIndex = null;
+      document.getElementById('modal-snapshot-title').textContent = '新增資產快照 (依銀行機構分類填寫)';
+      document.getElementById('modal-title-icon').textContent = '➕';
+      
+      const snapshots = window.state.snapshots || [];
+      const latest = snapshots.length > 0 ? snapshots[snapshots.length - 1] : null;
+      
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('modal-input-date').value = today;
+      document.getElementById('modal-input-rate').value = latest ? Number(latest.usd_rate) : 32.0;
+      document.getElementById('modal-input-note').value = '';
+
+      window.buildModalTable(latest ? latest.accounts : null, latest ? latest.accounts : null);
+      document.getElementById('modal-snapshot-editor').classList.remove('hidden');
+      window.updateModalLiveTotal();
+    };
+
+    window.openEditSnapshotModal = function (index) {
+      const snapshots = window.state.snapshots || [];
+      if (index < 0 || index >= snapshots.length) return;
+      window.modalEditingIndex = index;
+      const targetSnap = snapshots[index];
+      const prevSnap = index > 0 ? snapshots[index - 1] : null;
+
+      document.getElementById('modal-snapshot-title').textContent = `編輯快照：${targetSnap.date} (依銀行分類)`;
+      document.getElementById('modal-title-icon').textContent = '✏️';
+      
+      document.getElementById('modal-input-date').value = targetSnap.date;
+      document.getElementById('modal-input-rate').value = Number(targetSnap.usd_rate);
+      document.getElementById('modal-input-note').value = targetSnap.note || '';
+
+      window.buildModalTable(targetSnap.accounts, prevSnap ? prevSnap.accounts : null);
+      document.getElementById('modal-snapshot-editor').classList.remove('hidden');
+      window.updateModalLiveTotal();
+    };
+
+    window.cloneValuesToModal = function () {
+      const snapshots = window.state.snapshots || [];
+      let refAccounts = null;
+      if (window.modalEditingIndex !== null && window.modalEditingIndex > 0) {
+        refAccounts = snapshots[window.modalEditingIndex - 1].accounts;
+      } else if (snapshots.length > 0) {
+        refAccounts = snapshots[snapshots.length - 1].accounts;
+      }
+
+      if (refAccounts) {
+        const inputs = document.querySelectorAll('.modal-acc-input');
+        inputs.forEach(inp => {
+          const key = inp.getAttribute('data-acc-key');
+          if (refAccounts[key] !== undefined) {
+            inp.value = refAccounts[key];
+          }
+        });
+        window.updateModalLiveTotal();
+        showToast('已成功將參考期數值完整帶入！', 'success');
+      }
+    };
+
+    // Build the 6 Bank Institution table sections inside Data Entry Modal
+    window.buildModalTable = function (initialValues = null, prevReferenceValues = null) {
+      const container = document.getElementById('modal-table-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const state = window.state;
+      const accountsMeta = state.accounts_meta || [];
+
+      window.BANK_INSTITUTIONS.forEach((g) => {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'card-panel overflow-hidden border border-dark-700';
+
+        let tableHTML = `
+          <div class="px-3.5 py-2 bg-dark-750 border-b border-dark-700 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-200 flex items-center space-x-1.5">
+              <span>${g.icon}</span>
+              <span>${escapeHtml(g.institution)}</span>
+            </span>
+            <span class="text-[11px] text-slate-400 font-mono">${g.keys.length} 個帳戶</span>
+          </div>
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="bg-dark-900 text-slate-400 font-mono text-[11px] border-b border-dark-700">
+              <tr>
+                <th class="py-1.5 px-3 w-2/5">帳戶名稱</th>
+                <th class="py-1.5 px-3 text-center w-1/6">幣別</th>
+                <th class="py-1.5 px-3 text-right w-1/4">上一期參考值</th>
+                <th class="py-1.5 px-3 text-right w-1/3">本次快照金額</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-dark-700/60 font-mono">`;
+
+        g.keys.forEach(k => {
+          const accMeta = accountsMeta.find(a => a.key === k) || { currency: 'TWD' };
+          const isUSD = accMeta.currency === 'USD';
+
+          const prevVal = prevReferenceValues && (prevReferenceValues[k] !== undefined)
+            ? Number(prevReferenceValues[k]) 
+            : 0;
+          
+          const currentVal = initialValues && (initialValues[k] !== undefined)
+            ? Number(initialValues[k]) 
+            : prevVal;
+
+          tableHTML += `
+            <tr class="hover:bg-dark-750/40">
+              <td class="py-2 px-3 ${isUSD ? 'text-blue-300 font-semibold' : 'text-slate-300 font-medium'} truncate" title="${escapeHtml(k)}">
+                ${escapeHtml(k)}
+              </td>
+              <td class="py-2 px-3 text-center">
+                <span class="text-[11px] font-mono px-1.5 py-0.5 rounded ${isUSD ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-slate-800 text-slate-400'}">
+                  ${escapeHtml(accMeta.currency)}
+                </span>
+              </td>
+              <td class="py-2 px-3 text-right text-slate-500 font-mono">
+                ${isUSD ? '$' : ''}${Math.round(prevVal).toLocaleString()}
+              </td>
+              <td class="py-1.5 px-3 text-right">
+                <input type="number" step="any" data-acc-key="${escapeHtml(k)}" data-currency="${escapeHtml(accMeta.currency)}" data-prev-val="${prevVal}" value="${currentVal}" class="modal-acc-input table-input text-right text-white font-mono px-2 py-1 rounded text-xs w-full max-w-[190px]">
+              </td>
+            </tr>`;
+        });
+
+        tableHTML += `</tbody></table>`;
+        groupDiv.innerHTML = tableHTML;
+        container.appendChild(groupDiv);
+      });
+
+      // Attach event listeners
+      const allInputs = container.querySelectorAll('.modal-acc-input');
+      allInputs.forEach(inp => {
+        inp.addEventListener('input', window.updateModalLiveTotal);
+      });
+      const rateInp = document.getElementById('modal-input-rate');
+      if (rateInp) rateInp.addEventListener('input', window.updateModalLiveTotal);
+    };
+
+    // Calculate Live Total in Modal Form
+    window.updateModalLiveTotal = function () {
+      const rateInp = document.getElementById('modal-input-rate');
+      const rate = Number(rateInp ? rateInp.value : 32.0) || 32.0;
+      let totalTWD = 0;
+      let totalUSD = 0;
+
+      const inputs = document.querySelectorAll('.modal-acc-input');
+      inputs.forEach(inp => {
+        const val = Number(inp.value) || 0;
+        const curr = inp.getAttribute('data-currency');
+        if (curr === 'USD') {
+          totalUSD += val;
+          totalTWD += val * rate;
+        } else {
+          totalTWD += val;
+        }
+      });
+
+      const totalDisplay = document.getElementById('modal-live-total-twd');
+      if (totalDisplay) {
+        totalDisplay.textContent = `NT$ ${Math.round(totalTWD).toLocaleString()}`;
+      }
+    };
+
+    // Modal: Save Snapshot
+    window.saveModalSnapshot = function () {
+      const dateInp = document.getElementById('modal-input-date');
+      const rateInp = document.getElementById('modal-input-rate');
+      const noteInp = document.getElementById('modal-input-note');
+      const errorElem = document.getElementById('modal-error-text');
+
+      const date = dateInp ? dateInp.value.trim() : '';
+      const rate = rateInp ? Number(rateInp.value) : 0;
+      const note = noteInp ? noteInp.value.trim() : '';
+
+      if (!date || isNaN(rate) || rate <= 0) {
+        if (errorElem) errorElem.classList.remove('hidden');
+        return;
+      }
+      if (errorElem) errorElem.classList.add('hidden');
+
+      const accounts = {};
+      const inputs = document.querySelectorAll('.modal-acc-input');
+      inputs.forEach(inp => {
+        const key = inp.getAttribute('data-acc-key');
+        if (key) {
+          accounts[key] = Number(inp.value) || 0;
+        }
+      });
+
+      const newSnap = {
+        date,
+        usd_rate: rate,
+        note,
+        accounts
+      };
+
+      const snapshots = window.state.snapshots || [];
+      if (window.modalEditingIndex !== null && window.modalEditingIndex >= 0 && window.modalEditingIndex < snapshots.length) {
+        snapshots[window.modalEditingIndex] = newSnap;
+        window.activeSnapshotIndex = window.modalEditingIndex;
+        showToast(`快照 ${date} 數值已成功更新並自動秒存！`, 'success');
+      } else {
+        const existingIdx = snapshots.findIndex(s => s.date === date);
+        if (existingIdx !== -1) {
+          snapshots[existingIdx] = newSnap;
+          window.activeSnapshotIndex = existingIdx;
+          showToast(`已覆寫更新快照 ${date}！`, 'success');
+        } else {
+          snapshots.push(newSnap);
+          snapshots.sort((a, b) => a.date.localeCompare(b.date));
+          window.activeSnapshotIndex = snapshots.findIndex(s => s.date === date);
+          showToast(`成功新增快照 ${date}！`, 'success');
+        }
+      }
+
+      document.getElementById('modal-snapshot-editor').classList.add('hidden');
+      window.renderAll();
+    };
+
+    // ==========================================
+    // STOCK POSITION MANAGEMENT
+    // ==========================================
+    window.openStockModal = function (market, action, index = -1) {
+      document.getElementById('stock-edit-market').value = market;
+      document.getElementById('stock-edit-index').value = index;
+
+      const title = document.getElementById('modal-stock-title');
+      const accGroup = document.getElementById('stock-input-account-group');
+      const accSelect = document.getElementById('stock-input-account');
+      const tickerInput = document.getElementById('stock-input-ticker');
+      const nameGroup = document.getElementById('stock-input-name-group');
+      const nameInput = document.getElementById('stock-input-name');
+      const sharesInput = document.getElementById('stock-input-shares');
+      const priceInput = document.getElementById('stock-input-price');
+      const costGroup = document.getElementById('stock-input-cost-group');
+      const costInput = document.getElementById('stock-input-cost');
+      const noteInput = document.getElementById('stock-input-note');
+
+      if (market === 'TW') {
+        title.textContent = action === 'add' ? '➕ 新增台灣股票 (玉山證券)' : '✏️ 編輯台灣股票';
+        accGroup.classList.add('hidden');
+        nameGroup.classList.remove('hidden');
+        costGroup.classList.remove('hidden');
+
+        if (action === 'edit' && index >= 0) {
+          const st = window.state.tw_stocks[index];
+          tickerInput.value = st.ticker || '';
+          nameInput.value = st.name || '';
+          sharesInput.value = st.shares || 0;
+          priceInput.value = st.price || 0;
+          costInput.value = st.cost_total || (st.shares * st.avg_cost) || 0;
+          noteInput.value = st.note || '';
+        } else {
+          tickerInput.value = '';
+          nameInput.value = '';
+          sharesInput.value = '';
+          priceInput.value = '';
+          costInput.value = '';
+          noteInput.value = '';
+        }
+      } else {
+        title.textContent = action === 'add' ? '➕ 新增美股標的' : '✏️ 編輯美股標的';
+        accGroup.classList.remove('hidden');
+        nameGroup.classList.add('hidden');
+        costGroup.classList.add('hidden');
+
+        if (action === 'edit' && index >= 0) {
+          const st = window.state.us_stocks[index];
+          accSelect.value = st.account || 'Firstrade';
+          tickerInput.value = st.ticker || '';
+          sharesInput.value = st.shares || '';
+          priceInput.value = st.price || '';
+          noteInput.value = st.note || '';
+        } else {
+          accSelect.value = 'Firstrade';
+          tickerInput.value = '';
+          sharesInput.value = '';
+          priceInput.value = '';
+          noteInput.value = '';
+        }
+      }
+
+      document.getElementById('modal-stock-editor').classList.remove('hidden');
+    };
+
+    window.closeStockModal = function () {
+      document.getElementById('modal-stock-editor').classList.add('hidden');
+    };
+
+    window.saveStockModal = function () {
+      const market = document.getElementById('stock-edit-market').value;
+      const index = Number(document.getElementById('stock-edit-index').value);
+
+      const ticker = document.getElementById('stock-input-ticker').value.trim().toUpperCase();
+      const shares = Number(document.getElementById('stock-input-shares').value) || 0;
+      const price = Number(document.getElementById('stock-input-price').value) || 0;
+      const note = document.getElementById('stock-input-note').value.trim();
+
+      if (!ticker) {
+        alert('請填寫標的代碼！');
+        return;
+      }
+
+      if (market === 'TW') {
+        const name = document.getElementById('stock-input-name').value.trim() || ticker;
+        let costTotal = Number(document.getElementById('stock-input-cost').value);
+        if (isNaN(costTotal) || costTotal <= 0) costTotal = shares * price;
+        const avgCost = shares > 0 ? costTotal / shares : price;
+        const mv = shares * price;
+        const pl = mv - costTotal;
+        const roi = costTotal > 0 ? pl / costTotal : 0;
+
+        const newTW = {
+          ticker,
+          name,
+          shares,
+          avg_cost: avgCost,
+          cost_total: costTotal,
+          price,
+          market_value: mv,
+          unrealized_pl: pl,
+          roi,
+          note
+        };
+
+        if (index >= 0 && index < window.state.tw_stocks.length) {
+          window.state.tw_stocks[index] = newTW;
+          showToast(`已更新台股 ${ticker}`, 'success');
+        } else {
+          window.state.tw_stocks.push(newTW);
+          showToast(`已新增台股 ${ticker}`, 'success');
+        }
+      } else {
+        const account = document.getElementById('stock-input-account').value;
+        const mv = shares * price;
+
+        const newUS = {
+          account,
+          ticker,
+          shares,
+          price,
+          market_value: mv,
+          note
+        };
+
+        if (index >= 0 && index < window.state.us_stocks.length) {
+          window.state.us_stocks[index] = newUS;
+          showToast(`已更新美股 ${ticker}`, 'success');
+        } else {
+          window.state.us_stocks.push(newUS);
+          showToast(`已新增美股 ${ticker}`, 'success');
+        }
+      }
+
+      window.closeStockModal();
+      window.syncStockValuationsToSnapshot();
+    };
+
+    window.deleteStockPosition = function (market, index) {
+      if (!confirm('確定要刪除這筆股票部位嗎？')) return;
+
+      if (market === 'TW') {
+        const deleted = window.state.tw_stocks.splice(index, 1);
+        showToast(`已刪除台股 ${deleted[0]?.ticker}`, 'info');
+      } else {
+        const deleted = window.state.us_stocks.splice(index, 1);
+        showToast(`已刪除美股 ${deleted[0]?.ticker}`, 'info');
+      }
+
+      window.syncStockValuationsToSnapshot();
+    };
+
+    // Auto-sync stock valuations to current snapshot account balances
+    window.syncStockValuationsToSnapshot = function () {
+      const state = window.state;
+      const snapshots = state.snapshots || [];
+      if (snapshots.length === 0) return;
+
+      const curSnap = snapshots[window.activeSnapshotIndex];
+      if (!curSnap) return;
+
+      const totalTWMV = (state.tw_stocks || []).reduce((sum, s) => sum + (Number(s.market_value) || ((Number(s.shares)||0)*(Number(s.price)||0))), 0);
+      curSnap.accounts['玉山證券'] = totalTWMV;
+
+      const usByBroker = {};
+      (state.us_stocks || []).forEach(s => {
+        const broker = s.broker || s.account || 'Firstrade';
+        const val = Number(s.market_value) || ((Number(s.shares) || 0) * (Number(s.price) || 0));
+        usByBroker[broker] = (usByBroker[broker] || 0) + val;
+      });
+
+      Object.keys(usByBroker).forEach(broker => {
+        if (curSnap.accounts[broker] !== undefined) {
+          curSnap.accounts[broker] = Number(usByBroker[broker].toFixed(2));
+        } else if (curSnap.accounts['Firstrade'] !== undefined) {
+          curSnap.accounts['Firstrade'] = Number(usByBroker[broker].toFixed(2));
+        }
+      });
+
+      window.renderAll();
+      showToast('已成功將台美股持股市值即時同步至當前快照！', 'success');
+    };
+
+    // Backup & CSV Exports
+    window.generateBackupDownload = function () {
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const filename = `finance_data_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.json`;
+      const blob = new Blob([JSON.stringify(window.state, null, 2)], { type: 'application/json;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(`已下載備份檔 ${filename}`, 'success');
+    };
+
+    // CSV Exports
+    window.exportCSV = function (type) {
+      const state = window.state;
+      let csv = '\uFEFF';
+      let filename = 'export.csv';
+
+      if (type === 'snapshots') {
+        filename = `Finance_Snapshots_${new Date().toISOString().split('T')[0]}.csv`;
+        const headers = ['快照日期', '美元匯率', '備註', '總資產(NTD)'];
+        window.BANK_INSTITUTIONS.forEach(g => {
+          g.keys.forEach(k => {
+            const accMeta = (state.accounts_meta || []).find(a => a.key === k) || { currency: 'TWD' };
+            headers.push(`${k}(${accMeta.currency})`);
+          });
+        });
+        csv += headers.map(h => `"${h}"`).join(',') + '\r\n';
+
+        (state.snapshots || []).forEach(s => {
+          const tot = window.calculateNetWorth(s).net_worth_twd;
+          const row = [s.date, s.usd_rate, s.note || '', Math.round(tot)];
+          window.BANK_INSTITUTIONS.forEach(g => {
+            g.keys.forEach(k => {
+              row.push(s.accounts[k] !== undefined ? s.accounts[k] : 0);
+            });
+          });
+          csv += row.map(r => `"${String(r).replace(/"/g, '""')}"`).join(',') + '\r\n';
+        });
+      } else if (type === 'stocks') {
+        filename = `Finance_Stocks_${new Date().toISOString().split('T')[0]}.csv`;
+        csv += `"市場","帳戶/代號","名稱/標的","股數","單價","總成本(NTD)","總市值","未實現損益","ROI"\r\n`;
+        (state.tw_stocks || []).forEach(st => {
+          csv += `"台股","${st.ticker}","${st.name}","${st.shares}","${st.price}","${st.cost_total}","${st.market_value}","${st.unrealized_pl}","${((st.roi||0)*100).toFixed(2)}%"\r\n`;
+        });
+        (state.us_stocks || []).forEach(st => {
+          csv += `"美股","${st.account}","${st.ticker||''}","${st.shares||''}","${st.price||''}","","${st.market_value||''}","",""\r\n`;
+        });
+      } else if (type === 'insurance') {
+        filename = `Finance_Insurance_${new Date().toISOString().split('T')[0]}.csv`;
+        csv += `"#","歸屬銀行/公司","保單類型","名稱","號碼","被保險人","開始日","結束日","年繳保費","累計保費/保額","備註"\r\n`;
+        (state.insurance || []).forEach(p => {
+          csv += `"${p.id}","${p.company||''}","${p.type||''}","${p.name||''}","${p.policy_no||''}","${p.insured||''}","${p.start||''}","${p.end||''}","${p.premium_year||''}","${p.premium_cumulative||p.coverage||''}","${p.note||''}"\r\n`;
+        });
+      }
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(`已匯出試算表 ${filename}`, 'success');
+    };
+
+    // DOM Ready Initialization
+    document.addEventListener('DOMContentLoaded', () => {
+      
+      // Tab Switching
+      const tabBtns = document.querySelectorAll('.nav-tab');
+      tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tab = btn.getAttribute('data-tab');
+          tabBtns.forEach(b => b.classList.remove('tab-active'));
+          btn.classList.add('tab-active');
+
+          document.querySelectorAll('.tab-view').forEach(view => view.classList.add('hidden'));
+          const target = document.getElementById(`view-${tab}`);
+          if (target) target.classList.remove('hidden');
+
+          if (tab === 'overview') {
+            window.renderCharts();
+          }
+        });
+      });
+
+      // Global Snapshot Selector
+      const globalSnapSelect = document.getElementById('global-snapshot-select');
+      if (globalSnapSelect) {
+        globalSnapSelect.addEventListener('change', (e) => {
+          window.selectSnapshot(Number(e.target.value));
+        });
+      }
+
+      // Goto Latest Button
+      const gotoLatestBtn = document.getElementById('btn-goto-latest-snap');
+      if (gotoLatestBtn) {
+        gotoLatestBtn.addEventListener('click', () => {
+          window.selectSnapshot(window.state.snapshots.length - 1);
+        });
+      }
+
+      // Initial Render
+      window.renderAll();
+    });
+  
+    // =======================================================
+    // DYNAMIC ACCOUNT MANAGER CONTROLLERS
+    // =======================================================
+    window.openAccountManagerModal = function () {
+      const modal = document.getElementById('modal-account-manager');
+      if (modal) {
+        modal.classList.remove('hidden');
+        window.renderAccountManagerList();
+      }
+    };
+
+    window.closeAccountManagerModal = function () {
+      const modal = document.getElementById('modal-account-manager');
+      if (modal) modal.classList.add('hidden');
+    };
+
+    window.renderAccountManagerList = function () {
+      const listContainer = document.getElementById('acc-manager-list');
+      const countElem = document.getElementById('acc-list-count');
+      if (!listContainer) return;
+
+      const meta = (window.state && window.state.accounts_meta) || [];
+      if (countElem) countElem.textContent = meta.length;
+
+      listContainer.innerHTML = '';
+      meta.forEach((acc, idx) => {
+        const item = document.createElement('div');
+        item.className = 'flex items-center justify-between p-2.5 rounded-lg bg-dark-750 border border-dark-700 hover:border-dark-600 transition';
+
+        const isUSD = acc.currency === 'USD';
+        const currBadge = isUSD 
+          ? '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">USD</span>'
+          : '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">TWD</span>';
+
+        const catBadge = `<span class="px-1.5 py-0.5 rounded text-[10px] bg-dark-700 text-slate-300">${escapeHtml(acc.category)}</span>`;
+        const typeBadge = acc.deposit_type ? `<span class="px-1.5 py-0.5 rounded text-[10px] bg-dark-700 text-slate-400">${escapeHtml(acc.deposit_type)}</span>` : '';
+
+        item.innerHTML = `
+          <div class="flex items-center space-x-2.5 flex-1 min-w-0">
+            <span class="text-slate-500 font-mono text-xs w-6">#${idx + 1}</span>
+            <span class="font-bold ${isUSD ? 'text-blue-200' : 'text-slate-200'} truncate">${escapeHtml(acc.key)}</span>
+            <div class="flex items-center space-x-1.5">
+              ${currBadge}
+              ${catBadge}
+              ${typeBadge}
+            </div>
+          </div>
+          <button type="button" class="btn-del-account text-xs text-rose-400 hover:text-rose-300 bg-rose-950/30 hover:bg-rose-900/50 border border-rose-800/40 px-2.5 py-1 rounded transition flex items-center space-x-1 cursor-pointer" title="刪除此帳戶">
+            <span>🗑️</span> <span>刪除</span>
+          </button>
+        `;
+        item.querySelector('.btn-del-account').addEventListener('click', () => {
+          window.deleteAccount(acc.key);
+        });
+        listContainer.appendChild(item);
+      });
+    };
+
+    window.submitAddAccount = function () {
+      const keyInp = document.getElementById('acc-input-key');
+      const currInp = document.getElementById('acc-input-currency');
+      const catInp = document.getElementById('acc-input-category');
+      const typeInp = document.getElementById('acc-input-type');
+      const instInp = document.getElementById('acc-input-inst');
+
+      const key = keyInp ? keyInp.value.trim() : '';
+      if (!key) {
+        showToast('請輸入有效的帳戶名稱', 'error');
+        return;
+      }
+
+      window.state = window.state || {};
+      window.state.accounts_meta = window.state.accounts_meta || [];
+      const exists = window.state.accounts_meta.some(a => a.key === key);
+      if (exists) {
+        showToast(`帳戶「${key}」已存在，請勿重複新增`, 'error');
+        return;
+      }
+
+      const currency = currInp ? currInp.value : 'TWD';
+      const category = catInp ? catInp.value : 'cash';
+      const deposit_type = typeInp ? typeInp.value : 'demand';
+      const institution = instInp && instInp.value.trim() ? instInp.value.trim() : undefined;
+
+      const newAccount = { key, currency, category, deposit_type };
+      if (institution) newAccount.institution = institution;
+
+      window.state.accounts_meta.push(newAccount);
+
+      // Initialize balance = 0 in all snapshots
+      if (window.state.snapshots && Array.isArray(window.state.snapshots)) {
+        window.state.snapshots.forEach(s => {
+          s.accounts = s.accounts || {};
+          if (!(key in s.accounts)) {
+            s.accounts[key] = 0;
+          }
+        });
+      }
+
+      window.syncCategoryDefinitions();
+      window.renderAccountManagerList();
+      window.renderAll();
+      showToast(`已成功新增帳戶「${key}」！`, 'success');
+
+      if (keyInp) keyInp.value = '';
+      if (instInp) instInp.value = '';
+    };
+
+    window.deleteAccount = function (key) {
+      if (typeof window !== 'undefined' && window.confirm && !window.confirm(`確定要自系統中刪除帳戶「${key}」嗎？\n這將同時從所有快照記錄中移除該帳戶餘額。`)) {
+        return;
+      }
+
+      window.state.accounts_meta = (window.state.accounts_meta || []).filter(a => a.key !== key);
+      if (window.state.snapshots && Array.isArray(window.state.snapshots)) {
+        window.state.snapshots.forEach(s => {
+          if (s.accounts && key in s.accounts) {
+            delete s.accounts[key];
+          }
+        });
+      }
+
+      window.syncCategoryDefinitions();
+      window.renderAccountManagerList();
+      window.renderAll();
+      showToast(`已成功刪除帳戶「${key}」！`, 'info');
+    };
+
+    // =======================================================
+    // 🎲 RANDOMIZED DEMO SNAPSHOT SCENARIO GENERATOR
+    // =======================================================
+    window.randomizeDemoState = function () {
+      const scenarios = [
+        {
+          name: '穩健小資存股族',
+          note: '專注台股高股息與指數 ETF，保有適度現金防護',
+          twdFactor: 0.8,
+          usdFactor: 0.6
+        },
+        {
+          name: '美股科技成長派',
+          note: '重倉全球大型科技權值股 (QQQ/NVDA/VOO)，享有美金匯益',
+          twdFactor: 0.6,
+          usdFactor: 1.5
+        },
+        {
+          name: '多元平衡防守型',
+          note: '高度流動性，充足應急水庫與美元儲蓄險穩健收息',
+          twdFactor: 1.3,
+          usdFactor: 1.1
+        }
+      ];
+
+      const scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+      const state = window.state;
+      if (!state) return;
+
+      // Randomize Snapshots balances
+      if (state.snapshots && Array.isArray(state.snapshots)) {
+        state.snapshots.forEach((snap, sIdx) => {
+          const progressFactor = 1 + (sIdx * 0.05);
+          const rateJitter = (Math.random() * 0.8 - 0.4);
+          snap.usd_rate = Number((31.8 + rateJitter).toFixed(2));
+
+          const accounts = snap.accounts || {};
+          Object.keys(accounts).forEach(k => {
+            const accMeta = (state.accounts_meta || []).find(a => a.key === k);
+            const isUSD = accMeta && accMeta.currency === 'USD';
+            const baseFactor = isUSD ? scenario.usdFactor : scenario.twdFactor;
+            const randomFluct = 0.85 + (Math.random() * 0.3); // ±15%
+            const curVal = Number(accounts[k]);
+            const origVal = (!isNaN(curVal) && curVal > 0) ? curVal : (isUSD ? 5000 : 150000);
+            accounts[k] = Math.round(origVal * baseFactor * randomFluct * progressFactor);
+          });
+        });
+      }
+
+      // Randomize stock prices realistically
+      if (state.tw_stocks && Array.isArray(state.tw_stocks)) {
+        state.tw_stocks.forEach(stk => {
+          const fluct = 1 + (Math.random() * 0.16 - 0.08); // ±8%
+          stk.price = Number((stk.price * fluct).toFixed(2));
+          stk.market_value = Math.round(stk.shares * stk.price);
+          stk.unrealized_pl = Math.round(stk.market_value - stk.cost_total);
+          stk.roi = stk.cost_total > 0 ? Number(((stk.unrealized_pl / stk.cost_total) * 100).toFixed(2)) : 0;
+        });
+      }
+
+      if (state.us_stocks && Array.isArray(state.us_stocks)) {
+        state.us_stocks.forEach(stk => {
+          const fluct = 1 + (Math.random() * 0.20 - 0.10); // ±10%
+          stk.price = Number((stk.price * fluct).toFixed(2));
+          stk.market_value = Number((stk.shares * stk.price).toFixed(2));
+        });
+      }
+
+      window.syncCategoryDefinitions();
+      window.renderAll();
+      showToast(`🎲 成功骰出【${scenario.name}】示範情境！`, 'success');
+    };
+
+    // =======================================================
+    // 📂 LOCAL JSON FILE UPLOADER
+    // =======================================================
+    window.handleJSONFileUpload = function (event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const jsonObj = JSON.parse(e.target.result);
+          if (!jsonObj || !Array.isArray(jsonObj.snapshots)) {
+            showToast('JSON 格式錯誤：缺少 snapshots 陣列', 'error');
+            return;
+          }
+
+          window.state = jsonObj;
+          window.activeSnapshotIndex = Math.max(0, (window.state.snapshots || []).length - 1);
+          window.syncCategoryDefinitions();
+          window.renderAll();
+          showToast(`📂 成功匯入「${file.name}」，已為您自動持久化至瀏覽器快取！`, 'success');
+        } catch (err) {
+          showToast('JSON 解析失敗: ' + err.message, 'error');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    };
+  
+</script>
+</body>
+</html>
