@@ -2,6 +2,10 @@
 
 專為台灣與海外跨國資產配置打造的純前端個人財務儀表板。免裝伺服器、無須資料庫、零外部依賴，本機瀏覽器直接開啟即可追蹤台美雙幣淨值、股權配置與被動現金流。
 
+[![Release](https://img.shields.io/github/v/release/junyiphys/personal-finance-dashboard?color=blue&label=Latest%20Release)](https://github.com/junyiphys/personal-finance-dashboard/releases/latest)
+[![Demo](https://img.shields.io/badge/Demo-Live%20Preview-emerald)](https://junyiphys.github.io/personal-finance-dashboard/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-slate.svg)](./LICENSE)
+
 > [!IMPORTANT]
 > **免責聲明 (Disclaimer)**
 >
@@ -23,7 +27,7 @@
 
 ## 快速上手
 
-1. **開啟程式**：下載本專案後，直接以任一瀏覽器（Chrome、Edge、Safari、Firefox）開啟 `dashboard.html`。
+1. **取得程式**：至 [Releases 頁面](https://github.com/junyiphys/personal-finance-dashboard/releases/latest) 下載最新版本的 `Source code (zip)`（或 Clone 本專案），解壓縮後直接以任一瀏覽器（Chrome、Edge、Safari、Firefox）開啟 `dashboard.html`。
 2. **體驗示範情境**：點擊頂部工具列的「🎲 隨機情境」，即可自動載入不同配置風格的示範數據並體驗圖表互動。
 3. **建立自己的帳戶**：點擊頂部「🏦 帳戶管理」自訂您的銀行與券商清單，即可開始在「快照管理」中記錄個人資產。
 
